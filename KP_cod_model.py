@@ -17,6 +17,7 @@ L_mat = 35
 # Von Bertalanffy growth rate
 # Should be allowed to vary with evolution
 k = 0.12
+# Density dependence in growth
 b_k = 9e-6
 # Asymptotic length
 # Should be allowed to vary with evolution
