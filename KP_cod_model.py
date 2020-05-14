@@ -22,9 +22,9 @@ b_k = -5.34e-11
 # Asymptotic length
 # Should be allowed to vary with evolution
 L_inf = 130
-# Allometric exponent for conversion of length to growth
+# Allometric exponent for conversion of length to weight
 c = 7e-6
-# Allometric multiplier for conversion of length to growth
+# Allometric multiplier for conversion of length to weight
 b = 3
 # Maturation ogive
 q = 0.2
