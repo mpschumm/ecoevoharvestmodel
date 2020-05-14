@@ -17,8 +17,8 @@ L_mat = 35
 # Von Bertalanffy growth rate
 # Should be allowed to vary with evolution
 k = 0.12
-# Density dependence in growth
-b_k = 9e-6
+# Density dependence in growth (Eikeset et al. PNAS 2016)
+b_k = -5.34e-11
 # Asymptotic length
 # Should be allowed to vary with evolution
 L_inf = 130
@@ -42,8 +42,8 @@ beta = 1e-8
 def length_at_age (past_length_at_age, k, L_inf):
     return past_length_at_age + k*(L_inf - past_length_at_age)
  
-def dd_length_at_age (past_length_at_age, k, L_inf, t):
-    return past_length_at_age + k*(L_inf - past_length_at_age) - b_k*sum(age_dist[4:21,t-1])
+def dd_length_at_age (past_length_at_age, k, L_inf, t, B_t):
+    return past_length_at_age + k*(L_inf - past_length_at_age)*(math.exp(B_t*b_k))
        
 # Convert length to weight
 def weight_at_age (age, c, b):
@@ -82,6 +82,13 @@ def number_individuals (age, m, Fishing):
     if age > 0 :
         return age_dist[age-1, t-1] * math.exp(-1*m - cost*(egg_production(age)/10.937239195172308) - Fishing*selective_mortality(lengths_at_ages[age]))
 
+# Calculate total population biomass
+def biomass_t (ages):
+    b_t = 0
+    for a in ages:
+        b_t = b_t + age_dist[a, t-1]*weight_at_age(a, c, b)
+    return(b_t)
+
 ### Run the model
 # Initialize empty vector of lengths at different ages
 lengths_at_ages = np.zeros(22)
@@ -96,11 +103,12 @@ mean_total_offspring = 0
 for t in range(0,390):
     if t>0:
         # For each year, loop through each of the non-zero ages
+        b_t = biomass_t(range(1,21))
         for a in range(1,21):
             # Calculate the number of individuals in this age class
             age_dist[a,t] = number_individuals(a, m, Fishing)
             # Calculate the length of fish at this age
-            lengths_at_ages[a] = dd_length_at_age(age_dist[a-1+22, t-1],k, L_inf, t)
+            lengths_at_ages[a] = dd_length_at_age(age_dist[a-1+22, t-1],k, L_inf, t, b_t)
             # Lifetime fitness tracker: calculates the fitness for an individual in the model, at the final time step of the model, by summing (survivorship*offspring production) across ages
             if t == 388:
                 # Calculate fraction surviving, l, at this age
