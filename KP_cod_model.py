@@ -6,10 +6,10 @@ import numpy as np
 import math
 
 # Initialize matrix of columns (years) and rows (age classes)
-age_dist = np.zeros((44, 401))
+age_dist = np.zeros((36, 401))
 
 # Add (arbitrarily) 100 individuals to age=10 to start with
-age_dist[10,0] = 100
+age_dist[5,0] = 100
 
 # Length at maturity
 # Should be allowed to vary with evolution
