@@ -41,7 +41,8 @@ beta = 1e-8
 # Obtain lengths at ages based on lengths of the same cohort at the past time point
 def length_at_age (past_length_at_age, k, L_inf):
     return past_length_at_age + k*(L_inf - past_length_at_age)
- 
+
+# Density dependent version of length at age function
 def dd_length_at_age (past_length_at_age, k, L_inf, t, B_t):
     return past_length_at_age + k*(L_inf - past_length_at_age)*(math.exp(B_t*b_k))
        
