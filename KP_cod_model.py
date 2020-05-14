@@ -30,8 +30,8 @@ b = 3
 q = 0.2
 # Mortality coefficient
 m = 0.2
-# Cost of egg production (arbitrary, just an experiment)
-cost = 0.01
+# Cost of growth (experimental)
+cost = 0.001
 # Fishing coefficient
 Fishing = 0.2
 # Recruitment Beverton-Holt parameters
@@ -80,7 +80,7 @@ def selective_mortality (length_at_age):
 # Calculate total number of individuals for an age class based on the cohort's size at the previous time point, mortality and fishing
 def number_individuals (age, m, Fishing):
     if age > 0 :
-        return age_dist[age-1, t-1] * math.exp(-1*m - cost*(egg_production(age)/10.937239195172308) - Fishing*selective_mortality(lengths_at_ages[age]))
+        return age_dist[age-1, t-1] * math.exp(-1*m - Fishing*selective_mortality(lengths_at_ages[age])) * (1-(age_dist[age-1+22, t-1] - age_dist[age-2+22, t-2])*cost)
 
 # Calculate total population biomass
 def biomass_t (ages):
