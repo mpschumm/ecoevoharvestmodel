@@ -13,30 +13,30 @@ age_dist[5,0] = 100
 
 # Length at maturity
 # Should be allowed to vary with evolution
-L_mat = 35
+L_mat = 24
 # Von Bertalanffy growth rate
 # Should be allowed to vary with evolution
-k = 0.12
+k = 0.3
 # Density dependence in growth (Eikeset et al. PNAS 2016)
-b_k = -5.34e-11
+b_k = -5.34e-13
 # Asymptotic length
 # Should be allowed to vary with evolution
-L_inf = 130
+L_inf = 30
 # Allometric exponent for conversion of length to growth
-c = 7e-6
+c = 1
 # Allometric multiplier for conversion of length to growth
 b = 3
 # Maturation ogive
 q = 0.2
 # Mortality coefficient
-m = 0.2
+m = 0.4
 # Cost of growth (experimental)
 cost = 0.001
 # Fishing coefficient
 Fishing = 0.2
 # Recruitment Beverton-Holt parameters
-alpha = 0.5
-beta = 1e-8
+alpha = 84
+beta = 1
 
 # Obtain lengths at ages based on lengths of the same cohort at the past time point
 def length_at_age (past_length_at_age, k, L_inf):
@@ -47,9 +47,10 @@ def dd_length_at_age (past_length_at_age, k, L_inf, t, B_t):
     return past_length_at_age + k*(L_inf - past_length_at_age)*(math.exp(B_t*b_k))
        
 # Convert length to weight
+# Modified with FishBase values (!hard-coded!)
 def weight_at_age (age, c, b):
-    L = lengths_at_ages[age]
-    return(c*(L**b))
+    L = 0.005*(lengths_at_ages[age]**3.1)
+    return(L)
 
 # Calculate probability of maturation
 def p_maturity_at_age (age, q):
@@ -64,24 +65,26 @@ def egg_production (age):
 def egg_production_total (ages):
     total = 0
     for i in ages:
-        total = total + age_dist[i,t] * egg_production(i)
+        total = total + age_dist[i,t] * (egg_production(i)/907000000)
     return total
 
 # Density dependent recruitment for this year
 def recruitment (age, ages):
     if age == 0:
+        print(egg_production_total(ages))
         # currently Beverton-Holt recruitment – try this with other models in the future?
-        N = ( (alpha*egg_production_total(ages)) / (1 + beta*egg_production_total(ages)) )
+        N = ( (alpha*egg_production_total(ages)) / (1 + beta*egg_production_total(ages)) ) * 1000000000
+        print(N)
     return N
    
-# Selective fishing mortality for a given length - rises from 0 to 1 with inflection at length = 50 
+# Selective fishing mortality for a given length - rises from 0 to 1 with inflection at length = 10 for herring 
 def selective_mortality (length_at_age):
-    return 1 / (1 + math.exp(-0.2*(length_at_age - 50)))
+    return 1 / (1 + math.exp(-0.2*(length_at_age - 20)))
 
 # Calculate total number of individuals for an age class based on the cohort's size at the previous time point, mortality and fishing
 def number_individuals (age, m, Fishing):
     if age > 0 :
-        return age_dist[age-1, t-1] * math.exp(-1*m - Fishing*selective_mortality(lengths_at_ages[age])) * (1-(age_dist[age-1+22, t-1] - age_dist[age-2+22, t-2])*cost)
+        return age_dist[age-1, t-1] * math.exp(-1*m - Fishing*selective_mortality(lengths_at_ages[age])) * (1-(age_dist[age-1+18, t-1] - age_dist[age-2+18, t-2])*cost)
 
 # Calculate total population biomass
 def biomass_t (ages):
@@ -92,38 +95,41 @@ def biomass_t (ages):
 
 ### Run the model
 # Initialize empty vector of lengths at different ages
-lengths_at_ages = np.zeros(22)
+lengths_at_ages = np.zeros(18)
 # Initial size is 4cm.
 lengths_at_ages[0] = 4
-for i in range(1,21):
+for i in range(1,17):
     lengths_at_ages[i] = length_at_age(lengths_at_ages[i-1],k,L_inf)
-age_dist[22,0] = 4
+age_dist[18,0] = 4
 # Initialize the mean total offspring to 0
 mean_total_offspring = 0
 # Loop through 390 years
-for t in range(0,390):
+for t in range(390):
     if t>0:
         # For each year, loop through each of the non-zero ages
-        b_t = biomass_t(range(1,21))
-        for a in range(1,21):
+        b_t = biomass_t(range(1,17))
+        for a in range(1,17):
             # Calculate the number of individuals in this age class
             age_dist[a,t] = number_individuals(a, m, Fishing)
             # Calculate the length of fish at this age
-            lengths_at_ages[a] = dd_length_at_age(age_dist[a-1+22, t-1],k, L_inf, t, b_t)
+            value = age_dist[a-1+18, t-1]
+            lengths_at_ages[a] = dd_length_at_age(value,k, L_inf, t, b_t)
             # Lifetime fitness tracker: calculates the fitness for an individual in the model, at the final time step of the model, by summing (survivorship*offspring production) across ages
             if t == 388:
                 # Calculate fraction surviving, l, at this age
                 l = age_dist[a,t-1]/age_dist[0,t-1]
-                print(egg_production(20))
+                print(egg_production(16))
                 # Adding to the mean total offspring
                 mean_total_offspring = mean_total_offspring + egg_production(a)*l
         # For age 0, calculate recruitment 
-        age_dist[0, t] = recruitment(0, range(1,20))
+        age_dist[0, t] = recruitment(0, range(1,16))
     # Record the sizes at ages for this year
-    age_dist[range(22,44),t] = np.transpose(lengths_at_ages)
+    age_dist[range(18,36),t] = np.transpose(lengths_at_ages)
 
 print(age_dist.shape)
 
 print(mean_total_offspring)
+
+print(egg_production(2))
 
 np.savetxt("output",age_dist)
