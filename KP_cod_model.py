@@ -18,13 +18,13 @@ L_mat = 24
 # Should be allowed to vary with evolution
 k = 0.3
 # Density dependence in growth (Eikeset et al. PNAS 2016)
-b_k = -5.34e-13
+b_k = -5.34e-14
 # Asymptotic length
 # Should be allowed to vary with evolution
 L_inf = 30
-# Allometric exponent for conversion of length to growth
+# Allometric exponent for conversion of length to weight
 c = 1
-# Allometric multiplier for conversion of length to growth
+# Allometric multiplier for conversion of length to weight
 b = 3
 # Maturation ogive
 q = 0.2
@@ -65,13 +65,12 @@ def egg_production (age):
 def egg_production_total (ages):
     total = 0
     for i in ages:
-        total = total + age_dist[i,t] * (egg_production(i)/907000000)
+        total = total + age_dist[i,t] * (egg_production(i)/90718500000)
     return total
 
 # Density dependent recruitment for this year
 def recruitment (age, ages):
     if age == 0:
-        print(egg_production_total(ages))
         # currently Beverton-Holt recruitment – try this with other models in the future?
         N = ( (alpha*egg_production_total(ages)) / (1 + beta*egg_production_total(ages)) ) * 1000000000
         print(N)
@@ -129,7 +128,5 @@ for t in range(390):
 print(age_dist.shape)
 
 print(mean_total_offspring)
-
-print(egg_production(2))
 
 np.savetxt("output",age_dist)
