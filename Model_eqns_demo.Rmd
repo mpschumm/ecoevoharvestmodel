@@ -1,0 +1,620 @@
+---
+title: "Biomass pool population model"
+author: "Matthew Schumm"
+date: "8/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+&nbsp;
+
+**ABSTRACT**
+
+Harvest-induced evolution research to date, mostly theoretical and modeling-based, has suggested that eco-evolutionary feedback loops (EEFLs) can act either to magnify or buffer harvest-induced trait changes. Eco-genetic models of harvested populations have yet to explore how EEFLs interact with different types of biotic and abiotic environmental variation, with few if any such models including a both dynamically modeled and stochastic external environment and resource base. In this paper, we introduce a discrete-time age- and size-structured model of cohorts across discrete genotypes that can be coupled to an independently modeled resource base. Growth, reproduction, and survival are based on bioenergetic equations that vary mechanistically with resources and temperature. This model makes predictions for exploited populations in varying environments and helps to identify any general patterns in fisheries-induced EEFLs' existence in and effects on populations under different conditions of environmental change, while explicitly considering varied taxa with highly divergent trait evolvabilities and evolutionary histories.
+
+&nbsp;
+
+**RESEARCH QUESTIONS**
+
+**Random variability**
+
+How does introducing random variability, or deterministic directional change, in amount of resources available change the balance between different impacts of harvest (evolutionary effects vs. density-dependent changes)? Random variability may be stochasticity in a dynamically varying resource base, or in abiotic factors such as temperature.
+
+- What if other aspects of the environment (temperature, parasite and disease load) are changing in ways that affect individuals’ phenotypes and/or genotype frequencies over time?
+
+- How does phenotypic change in fish affect their interactions with their environment (what if they are no longer able to capture and eat desired prey/what if they become more susceptible to their predators due to phenotypic changes)?
+
+**Traits/trait heritabilities/trait correlations/cryptic evolution/different species with different life histories**
+
+What are relative contributions of the across-generations effects of harvest on 1) social/exploitative-competitive environment and 2) genotype frequencies?
+
+- How does this differ given different species’ life history parameters? How do effects of harvest on genotype frequencies differ given different life histories (and different patterns of fishing mortality), particularly at loci affecting growth rate (on which the evolutionary effects of fishing are unclear, Dunlop et al. 2009 Eco Apps)?
+
+- How does this differ given differences in heritability and genetic variation for potentially harvest-selected traits? For example, some species might have greater potential to evolve in growth rate but not in the ability to mature while at smaller size, leading to a possible synergistic effect on phenotype (increased growth rate, earlier maturation) of both changed environment and selective pressures. Other species might have greater potential to evolve in what size at which they mature, possibly leading to antagonistic and ultimately balancing effects on phenotype where evolution for smaller size-at-age is balanced by larger size-at-age due to less exploitative competition (“cryptic evolution”) (Edeline and Loeuille bioRxiv 2020).
+
+&nbsp;
+
+**MODEL FORM**
+
+The model is a discrete-time age-structured compartmental model where individuals in cohorts consume food, grow, die, and reproduce. The reversible and irreversible mass of the individuals in a cohort is updated and tracked through their life. It is treated as identical for all fish in a cohort (provided they all have the same genotype). Some of the parameters of these functions are fixed, some are density-dependent, and some are genetically determined. For different genotypes, multiple age-structured populations are modeled simultaneously, with their cohorts experiencing different rules for growth based on genetic differences. However, the density that recruitment (and potentially other components of the model) depends on is the combined number of individuals *across* these separate genotypes, as they are meant to represent one whole population. 
+
+This model is an "eco-genetic model" as described by Dunlop, Heino and Deickmann (2009), allowing for both density-dependent effects and frequency- and density-dependent selection to act simultaneously with evolutionary change. For the sake of relative simplicity and tractability, comparison to other models, and ability to track population-wide values and apply knowledge of population-level processes like recruitment, I have not built this as an agent-based model like many eco-genetic models (though the processes in the model could definitely be adapted to an ABM). This model is also a physiologically and bioenergetically structured model based on dynamic energy budget (DEB) theory introduced by Kooijman (2010) and integrated into population models by de Roos et al. (2006), Huss et al. (2012), and Audzijonyte and Richards (2018) that served as inspiration for this model. Individuals acquire energy according to size-specific assimilation and first expend energy on maintenance, the cost of which depends on the amount of both reversible (energy stores to be spent on maintenance or reproduction) and irreversible (structural) body mass. If there is any shortfall in energy for maintenance, reversible mass is used to fill the gap; if there is a surplus, energy is used for growth in reversible and irreversible mass. 
+
+The probability of maturation, or of undergoing a change in energy allocation putting more energy into reversible mass for possible reproduction, at a given length has been shown to be mostly age-independent for fish species ranging from Pacific herring to starry flounder to European smelt (Sewall et al. 2019, Policansky 1982, Engelhard and Heino 2004, Arula et al. 2017), and other modeling papers have made the assumption of a flat reaction norm for size with respect to age and mostly size-dependent energy allocation patterns (de Roos et al. 2006, Huss et al. 2012). Consequently, this model currently has energy allocation for a cohort to reversible vs. irreversible mass dependent on those fishes' length, but this can be changed. Shift in energy allocation and consequent maturation is likely a function of a complex set of variables including both size and perhaps age as perceived via environmental cues or photoperiods; while maturation in this model is technically length-dependent only, actual reproduction in the model is additionally dependent on time (only happening once in a year, with the model timestep flexible to representing days, months or any time unit within a year).
+
+Arula T, Shpilev H, Raid T, Vetemaa M, Albert A. Maturation at a young age and small size of European smelt (Osmerus eperlanus): A consequence of population overexploitation or climate change?. Helgoland Marine Research. 2017 Dec;71(1):1-9.
+
+Audzijonyte A, Richards SA. The energetic cost of reproduction and its effect on optimal life-history strategies. The American Naturalist. 2018 Oct 1;192(4):E150-62.
+
+Dunlop ES, Heino M, Dieckmann U. Eco‐genetic modeling of contemporary life‐history evolution. Ecological Applications. 2009 Oct;19(7):1815-34.
+
+Edeline E, Loeuille N. Size-dependent eco-evolutionary feedback loops in exploited ecosystems. bioRxiv. 2020 Jan 1.
+
+Huss M, Gårdmark A, Van Leeuwen A, De Roos AM. Size‐and food‐dependent growth drives patterns of competitive dominance along productivity gradients. Ecology. 2012 Apr;93(4):847-57.
+
+Kooijman, S. A. L. M. (2010). Dynamic Energy Budget Theory for Metabolic Organization, 3rd edn. Cambridge, UK: Cambridge University Press.
+
+Policansky D. Influence of age, size, and temperature on metamorphosis in the starry flounder, Platichthys stellatus. Canadian Journal of Fisheries and Aquatic Sciences. 1982 Mar 1;39(3):514-7.
+
+de Roos AM, Boukal DS, Persson L. Evolutionary regime shifts in age and size at maturation of exploited fish stocks. Proceedings of the Royal Society B: Biological Sciences. 2006 Aug 7;273(1596):1873-80.
+
+Sewall F, Norcross B, Vollenweider J, Heintz R. Growth, energy storage, and feeding patterns reveal winter mortality risks for juvenile Pacific herring in Prince William Sound, Alaska, USA. Marine Ecology Progress Series. 2019 Jul 30;623:195-208.
+
+&nbsp;
+
+**MODEL EQUATIONS**
+
+(Form of equations mostly sourced from Audzijonyte and Richards 2018 Am Nat)
+
+**Energy allocation**
+
+Equation for interconverting between the structural mass of an age cohort's individuals at the previous timestep, and those individuals' body length at the previous timestep, where S is structural mass in grams:
+
+(Eq. 1) $\large S_{t-1}(l_{t-1})=c_{1} \times (l_{t-1})^{3}$
+
+Equation for calculating $\lambda_{l}$, the length-specific maximum and target ratio of reversible to structural biomass (if a fish has enough energy to put toward reversible mass in order to meet this ratio, any additional energy will be spent in equal parts on structural and reversible mass):
+
+(Eq. 2) $\large \lambda_{l} = (\lambda_{max})\frac{e^{r \times (l-\bar{l})}}{1+e^{r \times (l-\bar{l})}}$
+
+where $\bar{l}$ is the age at which the function has an inflection point, and r describes how rapidly the target ratio rises.
+
+Plot of functional form:
+```{r}
+ratios <- vector(mode="numeric", length=25)
+r =6
+# In meters
+a_bar = 0.2
+lambda_min=0
+lambda_max=1.3
+
+for (i in 1:100) {
+  ratios[i] <- lambda_min + (lambda_max-lambda_min)*(exp(r*((i/100)-a_bar)))/(1+exp(r*((i/100)-a_bar)))
+}
+plot(0:(length(ratios)-1), ratios, xlab="length (cm)", ylab="lambda_l", type="l")
+abline(h=1.3)
+```
+
+(Eq. 3) $\large I(S) = I_{0}S^{I_{1}}$, where I is energy intake, and $I_{0}$ and $I_{1}$ are constants.
+
+The cost of maintenance, where E is reversible mass in grams:
+
+(Eq. 4) $\large C_{m}(S,E) = c_{S}S + c_{E}E$
+
+The net intake of energy, after maintenance has occurred:
+
+(Eq. 5) $\large I_{net} = I(S) - C_{m}(S,E)$  
+
+&nbsp;
+
+(Eq. 6) **if $I_{net} < 0$:**
+
+The cost is paid from reversible biomass.
+
+$\large E_t = E_{t-1} + I_{net}\times{e_E}$
+where $e_E$ and $e_S$ are efficiencies for conversions between energy intake and reversible and structural mass respectively.
+
+&nbsp;
+
+(Eq. 7) **if $I_{net} > 0$ & $\lambda_{l} > \frac{E_{t-1}}{S_{t-1}}$:**
+
+Calculate the amount of energy needed to bring Rev/Struct, or actual $\lambda$, up to $\lambda_{l}$.
+
+$\large I_E = (\lambda_{l}S_{t-1}-E_{t-1})/e_{E}$
+
+Give that amount (or as much of it as is possible) to reversible mass.
+
+if $\large (I_E - I_{net} \geq 0)$:
+
+$\>$$\>$$\>$ $\large E_{t-1} = I_{net} \times e_{E} + E_{t-1}$
+
+$\>$$\>$$\>$ $\large I_{net} = 0$
+
+if $\large (I_E - I_{net} < 0)$:
+
+$\>$$\>$$\>$ $\large E_{t-1} = I_{E} \times e_{E} + E_{t-1}$
+
+$\>$$\>$$\>$ $\large I_{net} = I_{net} - I_{E}$
+
+&nbsp;
+
+Convert remaining energy so there is an even split between structural and reversible mass (maintaining, not exceeding, $\lambda_{l}$).
+
+(Eq. 8a) $\large E_{t} = E_{t-1} + \frac{\lambda_{l} \times e_S}{\lambda_{l} \times e_S + e_E}\times I_{net}\times e_E$
+
+(Eq. 8b) $\large S_{t} = S_{t-1} + (1 - \frac{\lambda_{l} \times e_S}{\lambda_{l} \times e_S + e_E})\times I_{net}\times e_S$
+
+&nbsp;
+
+**Energy allocation: alternative modeling approach (de Roos et al.)**
+
+As described in the Model Form section above, the model by Audzijonyte and Richards which this model is in large part inspired by models the desired ratio of E to S as a function of age. In this formulation, neither age or size at maturity is directly specified and maturation can occur at a range of ages or sizes for a given age-dependent ratio function. This is not something we have included in this model, as energy allocation seems to depend more on a fish's changing size and resource acquisition, with the actual act of reproduction itself obviously following strong seasonality-related cues (Sewall et al. 2019, Policansky 1982, Engelhard and Heino 2004, Arula et al. 2017). Thus, here, this ratio depends on length (which is an allometric function of irreversible mass). However, Audzijonyte and Richards do elaborate the concept of this ratio varying continuously and not switching in a piecewise way after maturation, which we have retained.
+
+de Roos et al., by contrast, use a size-specific fraction of surplus post-maintenance energy to be devoted to irreversible over reversible mass, and that fraction is further multiplied by the current ratio of reversible to irreversible mass to obtain the final fraction of the energy that will be given to irreversible mass. This is summarized in the equations below.
+
+if $I_{net} > 0$:
+
+Fraction of $I_{net}$ devoted to S if $l < l_{mat}$: $\frac{E}{(1+c_{j})*c_{j}*S}$
+
+Fraction of $I_{net}$ devoted to S if $l > l_{mat}$: $\frac{E}{(1+c_{a})*c_{a}*S}$
+
+Where $c_{j}, c_{a}$ are parameters for desired body condition for juveniles and adults respectively.
+
+This has the effect of acting to maintain a certain ratio of reversible to irreversible mass for fish of a given size (the de Roos model does not account for in their equations the different efficiencies of converting energy to different types of mass). So, it is similar to my model, and to the Audzijonyte except for the Aduzijonyte model having that ratio be age-specific. However, the de Roos model has just two condition parameter values and a switch between them once $l_mat$ is attained, as opposed to having otpimized condition varied continuously.
+
+&nbsp;
+
+**Reproduction**
+
+The NON-SPAWNING cost of reproduction, in grams.
+
+(Eq. 9) $\large C_R(S) = r_{0}S^{r1}$
+
+Total spawning mass (a cohort is spawning only if $wE>C_R(S)$, AND only if is is the right time of year).
+
+(Eq. 10) $\large spawn mass(g.) = wE - C_R(S)$ where w corresponds to fraction of reversible biomass available for spawning in addition to all of the non-spawning costs of reproduction. 
+
+Recruitment of age-0 fish (Ricker):
+
+(Eq. 11) $\large R= \alpha \times fecundity \times e^{- \beta \times fecundity}$
+
+&nbsp;
+
+**Mortality**
+
+(Eq. 12) $\large N_{t} = N_{t-1} \times exp(-Fishing \times selectivity(length) - m -(m_{p,max} - m) \times e^{-z_pL} - m_{c,max} \times e^{-z_c \lambda})$
+
+```{r}
+curve(exp(-8*x), from =0, to=1, xlab="Length in m.", ylab="Additional natural mortality")
+curve(exp(-7*x), from =0, to=1.5, xlab="Lambda_actual", ylab="Additional natural mortality")
+```
+
+(Eq. 13) Selectivity = $\large \frac{1}{1+e^{-q_f*(length(cm)-mincatchsize)}}$
+
+```{r}
+curve(1/(1+exp(-0.2*(x - 50))), from =0, to=150, xlab="Length in cm.", ylab="proportion maximum fishing mortality")
+```
+
+&nbsp;
+
+**PARAMETER DEFINITIONS**
+
+$E, S$ = The amounts of reversible and structural biomass in a fish, in grams
+
+$r$ = Steepness of target Rev/Struct or E/S (or $\lambda_{age}$) with age
+
+$\bar{a}$ = the age at which the function has an inflection point
+
+$I_0, I_1$ = constant multiplier and exponent for determining density-independent energy intake based on amount of structural biomass
+
+$c_{1}$ = scaling parameter for calculating structural biomass from fish length
+
+$\lambda_{max}$ = 1.3 = maximum E/S ratio a fish can achieve in its life
+
+$c_S, c_E$ = multipliers for obtaining cost of maintenance of structural mass and reversible mass, respectively
+
+$e_S, e_E$ = efficiencies with which energy is converted to structural mass and reversible mass, respectively
+
+$r_0, r_1$ = multiplier and exponent for the cost of reproduction (in grams)
+
+$\alpha, \beta$ = Ricker density-independent growth and strength of density dependence, calculated by fitting log(R/fecundity)~fecundity to age-0 data (Ianelli et al. 2007) to obtain log($\alpha$) and $\beta$
+
+$q_{f}$ = sharpness of fishing size selectivity ogive
+
+Minimum catch size = 50 cm. for Gadus morhua
+
+$w$ = fraction of reversible mass devoted to reproduction
+
+$m$ = minimum natural mortality rate
+
+$m_{c,max}, m_{p,max}$ = higher values of mortality rate for fish in worse condition or for smaller more predation-prone fish, respectively
+
+$z_c, z_p$ = parameters corresponding to speed of exponential decline in additional mortality risk as a fish improves in body condition, and as a fish increases in length and grows out of experiencing high predation, respectively
+
+&nbsp;
+
+**CODE**
+
+```{r}
+genotype1r = 6
+genotype2r = 10
+genotype1w = 0.674
+genotype2w = 0.674
+
+# Set longevity of the fish species, runtime of the model, and number of distinct genotypes
+longevity_days = 9125
+runtime_days = 130*365
+genotypes = 2
+timescale= 91.25
+runtime = round(runtime_days/timescale)
+longevity = round(longevity_days/timescale)
+
+# How long to run model for convergence before addition of genetic diversity
+add_genotypes = 33440
+
+initialize_pop_matrices <- function(longevity, runtime, genotype) {
+  # Initialize matrix of columns (years) and rows (age classes)
+  # Multiplied by 3 because we'll be storing cohorts' reproductive biomass and lengths 
+  age_dist=matrix(0L, nrow=longevity*3, ncol=runtime+1)
+  # Add (arbitrarily) 10000 individuals to age=10 to start with
+  age_dist[round(3650/timescale), 1] = 10000
+  return(age_dist)
+}
+
+# Generate a matrix for each genotype
+for (g in 1:genotypes) {
+  assign(paste("age_dist_",g,sep=""),initialize_pop_matrices(longevity, runtime, g),envir = .GlobalEnv)
+}
+
+# Set parameters
+# Need to add density dependence
+# The steepness of the increase in the ratio lambda (reversible over structural mass)
+r = 6
+# The length at which the increasing function of lambda reaches its inflection point
+l_bar = 0.2
+# Scaling parameter for obtaining structural mass from standard length
+c_1 = 5787
+# Multiplier for obtaining overall yearly energy intake as a function of structural mass
+I_0 = 0.1*timescale
+# Exponent for obtaining overall yearly energy intake as a function of structural mass
+I_1 = 2/3
+# Maximum ratio lambda (reversible over structural mass) a fish can attain over its life
+lambda_max = 1.3
+# Minimum ratio lambda a fish can attain over its life
+lambda_min = 0
+# Multiplier for obtaining cost of maintenance of structural mass
+c_s = 0.003*timescale
+# Multiplier for obtaining cost of maintenance of reversible mass
+c_r = 0.0003*timescale
+# Efficiency with which energy is converted into reversible mass
+e_r = 0.9
+# Efficiency with which energy is converted to structural mass
+e_s = (1/3)
+# Multiplier and exponent for the cost of reproduction (in grams)
+r_0 = 6
+r_1 = 0.6
+# Effectively, reproductive investment (fraction of reversible mass devoted to reproduction)
+w= 0.674
+# Instantaneous base mortality rate
+m = log(0.9995^timescale)*(-1)
+# Instantaneous fishing mortality
+Fishing = 0
+# Ricker
+alpha = 8.44e-09
+b = 4.43e-15
+# Parameter setting size-selection ogive steepness
+q_f = 0.2
+# Minimum catch size for the species (in meters)
+mincatchsize = 0.5
+# Total population biomass
+b_t=0
+# Increased natural mortality rate at R/S = 0 or S = 0 
+m_max=log(0.994^timescale)*(-1)
+# Egg packing constant
+packing = 4.45e6
+# Parameter for exponential decline in condition-dependent mortality with improved body condition
+z_c=7
+# Parameter for exponential decline in predation mortality with increased body length
+z_p=8
+
+# For obtaining structural mass
+structural_mass <- function(l) {
+  return(c_1*(l)^3)
+}
+
+# Calculate the instrinsic length-dependent E/S ratio that the fish is trying to attain
+intrinsic_lambda <- function(l, l_bar, r, lambda_min, lambda_max) {
+  return(lambda_min + (lambda_max-lambda_min)*(exp(r*(l-l_bar)))/(1+exp(r*(l-l_bar))))
+}
+
+# Energy intake for the fish per year, dependent on fish structural biomass
+size_dependent_energy_intake <- function(S, I_0, I_1) {
+  return(I_0*(S)^(I_1))
+}
+
+# Calculate the cost of the year of maintaining current structural and reversible biomass
+maintenance_cost <- function(S, R, c_s, c_r) {
+  return(c_s*S + c_r*R)
+}
+
+# Function for calculating a new, reduced level of reversible biomass, if net energy intake is negative
+negative_I_net <- function(R, I_net, e_r) {
+  if (I_net < 0) {
+    return(R + (I_net/e_r))}
+}
+
+# Calculate the amount of energy needed to raise the R/S ratio to the length-dependent maximum
+I_R_raising_lambda <- function(lambda_a, S, R) {
+  return((lambda_a*S - R))
+}
+
+# Calculating proportion of any remaining energy to be converted to structural mass, to maintain R/S
+remaining_energy_allocation <- function(e_s, e_r, lambda_a) {
+  return((lambda_a*e_s)/(lambda_a*e_s + e_r))
+}
+
+# Calculate spawning stock biomass
+fecundity <- function(ages, t, age_dist, g) {
+  # Parameterizing genotypes
+  if (t >= round(add_genotypes/timescale)) {
+    w=0.674
+    # Genotype parameterization
+    if (g==1) {
+      w=genotype1w
+    }
+    if (g==2) {
+      w=genotype2w
+    }
+  }
+  fecundity = 0
+  for (a in ages) {
+    if ((w*age_dist[a+(longevity),t]-(r_0*structural_mass(age_dist[a+(2*longevity),t]))^(r_1))>0) {
+      fecundity = fecundity + (w*age_dist[a+(longevity),t]-(r_0*structural_mass(age_dist[a+(2*longevity),t]))^(r_1))*age_dist[a,t]
+      age_dist[a+(longevity),t] = age_dist[a+(longevity),t] - w*age_dist[a+(longevity),t]
+    }
+  }
+  # Convert from g. to kg.
+  fecundity = fecundity/1000
+  # Convert from kg. to fecundity
+  fecundity = fecundity*(packing)
+  assign(paste("age_dist_",g,sep=""),age_dist, envir = .GlobalEnv) 
+  return(fecundity)
+}
+
+# Fishing mortality is size selective
+selective_mortality <- function(length) {
+  1 / (1 + exp(-q_f*(length - mincatchsize)*100))
+}
+
+# Mortality drops as R/S increases, as S increases
+mortality <- function(age) {
+  lambda <- ((age_dist[age+(longevity),t]))/structural_mass(age_dist[age+(2*longevity),t])
+  length = age_dist[age+(2*longevity),t]
+  if (age < longevity) {
+    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_max*exp(-z_c*lambda) - (m_max-m)*exp(-z_p*length) )
+  }
+  if (age == longevity) {
+    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_max*exp(-z_c*lambda) - (m_max-m)*exp(-z_p*length))
+    N_t = age_dist[age,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_max*exp(-z_c*lambda) - (m_max-m)*exp(-z_p*length))
+  }
+  return(N_t)
+}
+
+# Calculate total population biomass
+biomass_t <- function(ages, t) {
+  for (a in ages) {
+    b_t = b_t + age_dist[a, t-1]*(structural_mass(age_dist[a+(2*longevity),t-1]))
+  }
+  return(b_t)
+}
+
+# Density dependent recruitment for this year
+recruitment <- function(age, ages, t) {
+  egg_production_total = 0
+  for (g in 1:genotypes) {
+    egg_production_total = egg_production_total + fecundity(ages, t, get(paste("age_dist_",g,sep="")),g)
+  }
+  relative_recruitment = vector(mode="numeric", length=genotypes)
+  for (g in 1:genotypes) {
+    relative_recruitment[g] = fecundity(ages, t, get(paste("age_dist_",g,sep="")),g)/egg_production_total
+  }
+  if (age==0) {
+    N_0 = alpha * egg_production_total * exp(-b*egg_production_total)
+    # Converting from thousands recruits to recruits, dividing by 2 because Ricker makes both male and female fish
+    N_0 = N_0 * 1000
+    N_0 = N_0/2
+  }
+  for (g in 1:genotypes) {
+    age_dist = get(paste("age_dist_",g,sep=""))
+    age_dist[1,t] = N_0*relative_recruitment[g]
+    assign(paste("age_dist_",g,sep=""),age_dist, envir = .GlobalEnv) 
+  }
+}
+
+# Obtain R and S for a cohort prior to its reproduction (or failure to reproduce) that year
+get_pre_reproductive_size <- function(R_past, l_past, a) {
+  S_past = structural_mass(l_past)
+  lambda_a = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
+  I_net = size_dependent_energy_intake(S_past, I_0, I_1) - maintenance_cost(S_past, R_past, c_s, c_r)
+  if (I_net < 0) {
+    R <- max(0,negative_I_net(R, I_net, e_r))
+  }
+  if (I_net >= 0 & lambda_a > (R_past/S_past)) {
+    # Gives amount of grams needed to raise R/S to lambda_l - not taking efficiency into account yet
+    I_R = I_R_raising_lambda(lambda_a, S_past, R_past)
+    if ((I_R/e_r - I_net) >=0) {
+      R_past = I_net*e_r + R_past
+      I_net = 0
+    }
+    if ((I_R/e_r - I_net) <0) {
+      R_past = I_R + R_past
+      I_net = I_net - I_R/e_r
+    }
+  }
+  if (I_net >= 0) {
+    R = R_past + remaining_energy_allocation(e_s, e_r, lambda_a)*e_r*I_net
+    S = S_past + (1-remaining_energy_allocation(e_s, e_r, lambda_a))*e_s*I_net
+  }
+  l = (S/c_1)^(1/3)
+  output <- c(R,l)
+  return(output)
+}
+
+# Add new recruits, and change the reproducing cohorts' amount of reversible mass
+reproduce <- function(ages, t) {
+  if (t>1) {
+    recruitment(0, ages, t)
+  }
+}
+
+# Calculate lengths (and reversible masses) at each age for the model with no density dependence
+lengths_at_t1 <- function(genotypes) {
+  t=1
+  for (g in 1:genotypes) {
+    age_dist = get(paste("age_dist_",g,sep=""))
+    age_dist[1+(longevity), 1] = 0.3066
+    age_dist[1+2*(longevity), 1] = 0.0493
+    for (i in 2:longevity) {
+      new_R_l = get_pre_reproductive_size(age_dist[i-1+(longevity), 1],age_dist[i-1+2*(longevity), 1], i-1)
+      age_dist[i+(longevity), 1] = new_R_l[1]
+      age_dist[i+(2*longevity), 1] = new_R_l[2]
+      if ((w*age_dist[i+(longevity),t]-(r_0*structural_mass(age_dist[i+(2*longevity),t]))^(r_1))>0)
+      {
+       age_dist[i+(longevity),t] = age_dist[i+(longevity),t] - w*age_dist[i+(longevity),t]*(timescale/365) 
+      }
+    }
+    assign(paste("age_dist_",g,sep=""),age_dist, envir = .GlobalEnv) 
+  }
+}  
+
+# Initialize lengths and reversible masses for ages
+lengths_at_t1(genotypes)
+
+# Run the model
+for (t in 2:runtime) {
+  b_t=0
+  if (t == round(add_genotypes/timescale)) {
+    Fishing = log(exp(-0.2)^(1/(365/timescale)))*(-1)
+  }
+  for (genotype in 1:genotypes) {
+    age_dist = get(paste("age_dist_",genotype,sep=""))
+    b_t = biomass_t(1:longevity, t)
+    assign(paste("age_dist_",genotype,sep=""),age_dist, envir = .GlobalEnv) 
+  }
+  for (genotype in 1:genotypes) {
+    
+    # Parameterizing genotypes
+    if (t >= round(add_genotypes/timescale)) {
+      r=6
+      # Genotype parameterization
+      if (genotype==1) {
+        # a_bar = 36.5
+        r=genotype1r
+      }
+      if (genotype==2) {
+        # a_bar = 365*2
+        r=genotype2r
+      }
+    }
+  
+    age_dist = get(paste("age_dist_",genotype,sep=""))
+    age_dist[1+(longevity), t] =  0.3066
+    age_dist[1+2*(longevity), t] = 0.0493
+    for (age in 2:longevity) {
+      new_R_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), 1], age-1)
+      age_dist[age+(longevity), t] = new_R_l[1]
+      age_dist[age+(2*longevity), t] = new_R_l[2]
+    
+    # Mortality
+    for (age in 2:longevity) {
+      age_dist[age, t] <- mortality(age)
+    }
+    }
+    assign(paste("age_dist_",genotype,sep=""),age_dist, envir = .GlobalEnv) 
+  }
+  if ((t%%round(365/timescale) == 0)) {
+   reproduce(1:longevity, t) 
+  }
+}
+
+### Analysis code
+
+approach <- vector(mode="numeric", length=runtime)
+for (i in 1:runtime) {
+  for (j in 1:genotypes) {
+    approach[i] <- approach[i]+ sum(get(paste("age_dist_", j, sep=""))[1:longevity,i])
+  } 
+}
+# Plot population dynamics
+plot(approach[seq(4,length(approach), by=4)], col="black", pch=19, type="l", ylab="Abundance",xlab="Time (3 months)")
+approach <- vector(mode="numeric", length=runtime)
+for (i in 1:runtime) {
+  approach[i] <- sum(age_dist_1[1:longevity,i])
+}
+lines(approach[seq(4,length(approach), by=4)], col="red", pch=19, type="l")
+cols <- c("orange","green","blue","purple")
+for (j in 2:genotypes) {
+  approach <- vector(mode="numeric", length=runtime)
+  for (i in 1:runtime) {
+    approach[i] <- sum(get(paste("age_dist_",j, sep=""))[1:longevity,i])
+  }
+  lines(approach[seq(4,length(approach), by=4)], col=cols[j-1], pch=19)
+}
+```
+
+**EVALUATING GENOTYPE RELATIVE FITNESS**
+
+Why is one genotype favored over the other? One genotype may result in better survival, or in more offspring produced over a lifetime. 
+
+```{r}
+i_0 = 367
+repro_vec = vector(length=longevity, mode="numeric")
+survivor_vec = vector(length=longevity, mode="numeric")
+w = genotype1w
+r = genotype1r
+age_dist <- age_dist_1
+survivor_vec[1]<-age_dist[1,i_0+1]
+repro_vec[1] <- 0
+for (i in 2:longevity) {
+  repro_vec[i] <- max(0, (w*age_dist[i+(longevity),i_0+i] - (r_0*structural_mass(age_dist[i+(2*longevity),i_0+i]))^(r_1)))
+  survivor_vec[i] <- age_dist[i,i_0+i]/(survivor_vec[1])
+}
+survivor_vec_1 <- survivor_vec
+repro_vec_1 <- repro_vec
+
+i_0 = 367
+repro_vec = vector(length=100, mode="numeric")
+survivor_vec = vector(length=100, mode="numeric")
+w = genotype2w
+r = genotype2r
+age_dist <- age_dist_2
+survivor_vec[1]<-age_dist[1,i_0+1]
+repro_vec[1] <- 0
+for (i in 2:longevity) {
+ repro_vec[i] <- max(0, (w*age_dist[i+(longevity),i_0+i] - (r_0*structural_mass(age_dist[i+(2*longevity),i_0+i]))^(r_1)))
+ survivor_vec[i] <- age_dist[i,i_0+i]/(survivor_vec[1])
+}
+plot((survivor_vec[2:length(survivor_vec)])-(survivor_vec_1[2:length(survivor_vec_1)]), ylab="Survivorship of genotype 2 - genotype 1", main="Survivorship advantage/disadvantage of\ngenotype 2 over 1", xlab="Time")
+plot(repro_vec-repro_vec_1, ylab="Reproduction of genotype 2 - genotype 1", main="Reproduction advantage/disadvantage of\ngenotype 2 over 1", xlab="Time")
+```
+
+```{r, eval=F}
+# Code for calculating the relationship of length to energy allocation from the supplemental data provided by Audzijonyte and Richards (2018)
+
+plot(length_ratio$length, length_ratio$ratio, xlim=c(0,1), ylim=c(0,1.3))
+ratios <- vector(mode="numeric", length=100)
+r =6
+# In days
+a_bar = 0.2
+lambda_min=0
+lambda_max=1.3
+for (i in seq(0.01,1,by=0.01)) {
+ratios[round(i*100)] <- lambda_min + (lambda_max-lambda_min)*(exp(r*(i-a_bar)))/(1+exp(r*(i-a_bar)))
+print(i)
+print(ratios[7])
+}
+points(seq(0.01,1,by=0.01), ratios, xlab="Age (years)", ylab="lambda_age", type="l")
+```
+
