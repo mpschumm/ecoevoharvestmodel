@@ -53,6 +53,8 @@ Dunlop ES, Heino M, Dieckmann U. Eco‐genetic modeling of contemporary life‐h
 
 Edeline E, Loeuille N. Size-dependent eco-evolutionary feedback loops in exploited ecosystems. bioRxiv. 2020 Jan 1.
 
+Engelhard GH, Heino M. Maturity changes in Norwegian spring-spawning herring Clupea harengus: compensatory or evolutionary responses?. Marine ecology progress series. 2004 May 19;272:245-56.
+
 Huss M, Gårdmark A, Van Leeuwen A, De Roos AM. Size‐and food‐dependent growth drives patterns of competitive dominance along productivity gradients. Ecology. 2012 Apr;93(4):847-57.
 
 Kooijman, S. A. L. M. (2010). Dynamic Energy Budget Theory for Metabolic Organization, 3rd edn. Cambridge, UK: Cambridge University Press.
@@ -97,7 +99,7 @@ plot(0:(length(ratios)-1), ratios, xlab="length (cm)", ylab="lambda_l", type="l"
 abline(h=1.3)
 ```
 
-(Eq. 3) $\large I(S) = I_{0}S^{I_{1}}$, where I is energy intake, and $I_{0}$ and $I_{1}$ are constants.
+(Eq. 3) $\large \rho(S) = \rho_{0}S^{\rho_{1}}\frac{X}{K_X+X}$, where $\rho$ is energy intake, $\rho_{0}$ and $\rho_{1}$ are constants, X is resource density (and $K_X$ is a saturation coefficient).
 
 The cost of maintenance, where E is reversible mass in grams:
 
@@ -105,46 +107,46 @@ The cost of maintenance, where E is reversible mass in grams:
 
 The net intake of energy, after maintenance has occurred:
 
-(Eq. 5) $\large I_{net} = I(S) - C_{m}(S,E)$  
+(Eq. 5) $\large \rho_{net} = \rho(S) - C_{m}(S,E)$  
 
 &nbsp;
 
-(Eq. 6) **if $I_{net} < 0$:**
+(Eq. 6) **if $\rho_{net} < 0$:**
 
 The cost is paid from reversible biomass.
 
-$\large E_t = E_{t-1} + I_{net}\times{e_E}$
+$\large E_t = E_{t-1} + \rho_{net}\times{e_E}$
 where $e_E$ and $e_S$ are efficiencies for conversions between energy intake and reversible and structural mass respectively.
 
 &nbsp;
 
-(Eq. 7) **if $I_{net} > 0$ & $\lambda_{l} > \frac{E_{t-1}}{S_{t-1}}$:**
+(Eq. 7) **if $\rho_{net} > 0$ & $\lambda_{l} > \frac{E_{t-1}}{S_{t-1}}$:**
 
 Calculate the amount of energy needed to bring Rev/Struct, or actual $\lambda$, up to $\lambda_{l}$.
 
-$\large I_E = (\lambda_{l}S_{t-1}-E_{t-1})/e_{E}$
+$\large \rho_E = (\lambda_{l}S_{t-1}-E_{t-1})/e_{E}$
 
 Give that amount (or as much of it as is possible) to reversible mass.
 
-if $\large (I_E - I_{net} \geq 0)$:
+if $\large (\rho_E - \rho_{net} \geq 0)$:
 
-$\>$$\>$$\>$ $\large E_{t-1} = I_{net} \times e_{E} + E_{t-1}$
+$\>$$\>$$\>$ $\large E_{t-1} = \rho_{net} \times e_{E} + E_{t-1}$
 
-$\>$$\>$$\>$ $\large I_{net} = 0$
+$\>$$\>$$\>$ $\large \rho_{net} = 0$
 
-if $\large (I_E - I_{net} < 0)$:
+if $\large (\rho_E - \rho_{net} < 0)$:
 
-$\>$$\>$$\>$ $\large E_{t-1} = I_{E} \times e_{E} + E_{t-1}$
+$\>$$\>$$\>$ $\large E_{t-1} = \rho_{E} \times e_{E} + E_{t-1}$
 
-$\>$$\>$$\>$ $\large I_{net} = I_{net} - I_{E}$
+$\>$$\>$$\>$ $\large \rho_{net} = \rho_{net} - \rho_{E}$
 
 &nbsp;
 
 Convert remaining energy so there is an even split between structural and reversible mass (maintaining, not exceeding, $\lambda_{l}$).
 
-(Eq. 8a) $\large E_{t} = E_{t-1} + \frac{\lambda_{l} \times e_S}{\lambda_{l} \times e_S + e_E}\times I_{net}\times e_E$
+(Eq. 8a) $\large E_{t} = E_{t-1} + \frac{\lambda_{l} \times e_S}{\lambda_{l} \times e_S + e_E}\times \rho_{net}\times e_E$
 
-(Eq. 8b) $\large S_{t} = S_{t-1} + (1 - \frac{\lambda_{l} \times e_S}{\lambda_{l} \times e_S + e_E})\times I_{net}\times e_S$
+(Eq. 8b) $\large S_{t} = S_{t-1} + (1 - \frac{\lambda_{l} \times e_S}{\lambda_{l} \times e_S + e_E})\times \rho_{net}\times e_S$
 
 &nbsp;
 
@@ -154,11 +156,11 @@ As described in the Model Form section above, the model by Audzijonyte and Richa
 
 de Roos et al., by contrast, use a size-specific fraction of surplus post-maintenance energy to be devoted to irreversible over reversible mass, and that fraction is further multiplied by the current ratio of reversible to irreversible mass to obtain the final fraction of the energy that will be given to irreversible mass. This is summarized in the equations below.
 
-if $I_{net} > 0$:
+if $\rho_{net} > 0$:
 
-Fraction of $I_{net}$ devoted to S if $l < l_{mat}$: $\frac{E}{(1+c_{j})*c_{j}*S}$
+Fraction of $\rho_{net}$ devoted to S if $l < l_{mat}$: $\frac{E}{(1+c_{j})*c_{j}*S}$
 
-Fraction of $I_{net}$ devoted to S if $l > l_{mat}$: $\frac{E}{(1+c_{a})*c_{a}*S}$
+Fraction of $\rho_{net}$ devoted to S if $l > l_{mat}$: $\frac{E}{(1+c_{a})*c_{a}*S}$
 
 Where $c_{j}, c_{a}$ are parameters for desired body condition for juveniles and adults respectively.
 
@@ -201,37 +203,26 @@ curve(1/(1+exp(-0.2*(x - 50))), from =0, to=150, xlab="Length in cm.", ylab="pro
 
 **PARAMETER DEFINITIONS**
 
-$E, S$ = The amounts of reversible and structural biomass in a fish, in grams
-
-$r$ = Steepness of target Rev/Struct or E/S (or $\lambda_{age}$) with age
-
-$\bar{a}$ = the age at which the function has an inflection point
-
-$I_0, I_1$ = constant multiplier and exponent for determining density-independent energy intake based on amount of structural biomass
-
-$c_{1}$ = scaling parameter for calculating structural biomass from fish length
-
-$\lambda_{max}$ = 1.3 = maximum E/S ratio a fish can achieve in its life
-
-$c_S, c_E$ = multipliers for obtaining cost of maintenance of structural mass and reversible mass, respectively
-
-$e_S, e_E$ = efficiencies with which energy is converted to structural mass and reversible mass, respectively
-
-$r_0, r_1$ = multiplier and exponent for the cost of reproduction (in grams)
-
-$\alpha, \beta$ = Ricker density-independent growth and strength of density dependence, calculated by fitting log(R/fecundity)~fecundity to age-0 data (Ianelli et al. 2007) to obtain log($\alpha$) and $\beta$
-
-$q_{f}$ = sharpness of fishing size selectivity ogive
-
-Minimum catch size = 50 cm. for Gadus morhua
-
-$w$ = fraction of reversible mass devoted to reproduction
-
-$m$ = minimum natural mortality rate
-
-$m_{c,max}, m_{p,max}$ = higher values of mortality rate for fish in worse condition or for smaller more predation-prone fish, respectively
-
-$z_c, z_p$ = parameters corresponding to speed of exponential decline in additional mortality risk as a fish improves in body condition, and as a fish increases in length and grows out of experiencing high predation, respectively
+| Parameters             | Definitions                                                                                                                                                                                                              |   |   |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---|---|
+| $E, S$                 | The amounts of reversible and structural biomass in a fish, in grams                                                                                                                                                     |   |   |
+| $r$                    | Steepness of target Rev/Struct or E/S (or $\lambda_{age}$) with age                                                                                                                                                      |   |   |
+| $\bar{a}$              | the age at which the function has an inflection point                                                                                                                                                                    |   |   |
+| $\rho_0, \rho_1$       | constant multiplier and exponent for determining density-independent energy intake based on amount of structural biomass                                                                                                 |   |   |
+| $c_{1}$                | scaling parameter for calculating structural biomass from fish length                                                                                                                                                    |   |   |
+| $\lambda_{max}$        | = 1.3 = maximum E/S ratio a fish can achieve in its life                                                                                                                                                                 |   |   |
+| $c_S, c_E$             | multipliers for obtaining cost of maintenance of structural mass and reversible mass, respectively                                                                                                                       |   |   |
+| $e_S, e_E$             | efficiencies with which energy is converted to structural mass and reversible mass, respectively                                                                                                                         |   |   |
+| $r_0, r_1$             | multiplier and exponent for the cost of reproduction (in grams)                                                                                                                                                          |   |   |
+| $\alpha, \beta$        | Ricker density-independent growth and strength of density dependence, calculated by fitting log(R/fecundity)~fecundity to age-0 data (Ianelli et al. 2007) to obtain log($\alpha$) and $\beta$                           |   |   |
+| $q_{f}$                | sharpness of fishing size selectivity ogive                                                                                                                                                                              |   |   |
+| Minimum catch size     | 50 cm. for Gadus morhua                                                                                                                                                                                                  |   |   |
+| $w$                    | fraction of reversible mass devoted to reproduction                                                                                                                                                                      |   |   |
+| $m$                    | minimum natural mortality rate                                                                                                                                                                                           |   |   |
+| $m_{c,max}, m_{p,max}$ | higher values of mortality rate for fish in worse condition or for smaller more predation-prone fish, respectively                                                                                                       |   |   |
+| $z_c, z_p$             | parameters corresponding to speed of exponential decline in additional mortality risk as a fish improves in body condition, and as a fish increases in length and grows out of experiencing high predation, respectively |   |   |
+| $K_X$                  | Half-saturation coefficient for food consumption                                                                                                                                                                         |   |   |
+| X                      | Food density                                                                                                                                                                                                             |   |   |
 
 &nbsp;
 
@@ -245,13 +236,17 @@ genotype2w = 0.674
 
 # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
 longevity_days = 9125
+# set runtime to any arbitrary desired value, in units of days
 runtime_days = 130*365
 genotypes = 2
+# Setting the length of the timestep in days
 timescale= 91.25
+# Setting run time and longevity to units of time steps
 runtime = round(runtime_days/timescale)
 longevity = round(longevity_days/timescale)
 
 # How long to run model for convergence before addition of genetic diversity
+# in units of days
 add_genotypes = 33440
 
 initialize_pop_matrices <- function(longevity, runtime, genotype) {
@@ -277,9 +272,9 @@ l_bar = 0.2
 # Scaling parameter for obtaining structural mass from standard length
 c_1 = 5787
 # Multiplier for obtaining overall yearly energy intake as a function of structural mass
-I_0 = 0.1*timescale
+p_0 = 0.1*timescale
 # Exponent for obtaining overall yearly energy intake as a function of structural mass
-I_1 = 2/3
+p_1 = 2/3
 # Maximum ratio lambda (reversible over structural mass) a fish can attain over its life
 lambda_max = 1.3
 # Minimum ratio lambda a fish can attain over its life
@@ -332,8 +327,8 @@ intrinsic_lambda <- function(l, l_bar, r, lambda_min, lambda_max) {
 }
 
 # Energy intake for the fish per year, dependent on fish structural biomass
-size_dependent_energy_intake <- function(S, I_0, I_1) {
-  return(I_0*(S)^(I_1))
+size_dependent_energy_intake <- function(S, p_0, p_1) {
+  return(p_0*(S)^(p_1))
 }
 
 # Calculate the cost of the year of maintaining current structural and reversible biomass
@@ -342,13 +337,13 @@ maintenance_cost <- function(S, E, c_S, c_E) {
 }
 
 # Function for calculating a new, reduced level of reversible biomass, if net energy intake is negative
-negative_I_net <- function(E, I_net, e_E) {
-  if (I_net < 0) {
-    return(E + (I_net/e_E))}
+negative_p_net <- function(E, p_net, e_E) {
+  if (p_net < 0) {
+    return(E + (p_net/e_E))}
 }
 
 # Calculate the amount of energy needed to raise the R/S ratio to the length-dependent maximum
-I_E_raising_lambda <- function(lambda_a, S, E) {
+p_E_raising_lambda <- function(lambda_a, S, E) {
   return((lambda_a*S - E))
 }
 
@@ -361,25 +356,25 @@ remaining_energy_allocation <- function(e_S, e_E, lambda_a) {
 get_pre_reproductive_size <- function(E_past, l_past, a) {
   S_past = structural_mass(l_past)
   lambda_a = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
-  I_net = size_dependent_energy_intake(S_past, I_0, I_1) - maintenance_cost(S_past, E_past, c_S, c_E)
-  if (I_net < 0) {
-    E <- max(0,negative_I_net(E, I_net, e_E))
+  p_net = size_dependent_energy_intake(S_past, p_0, p_1) - maintenance_cost(S_past, E_past, c_S, c_E)
+  if (p_net < 0) {
+    E <- max(0,negative_p_net(E, p_net, e_E))
   }
-  if (I_net >= 0 & lambda_a > (E_past/S_past)) {
+  if (p_net >= 0 & lambda_a > (E_past/S_past)) {
     # Gives amount of grams needed to raise E/S to lambda_l - not taking efficiency into account yet
-    I_E = I_E_raising_lambda(lambda_a, S_past, E_past)
-    if ((I_E/e_E - I_net) >=0) {
-      E_past = I_net*e_E + E_past
-      I_net = 0
+    p_E = p_E_raising_lambda(lambda_a, S_past, E_past)
+    if ((p_E/e_E - p_net) >=0) {
+      E_past = p_net*e_E + E_past
+      p_net = 0
     }
-    if ((I_E/e_E - I_net) <0) {
-      E_past = I_E + E_past
-      I_net = I_net - I_E/e_E
+    if ((p_E/e_E - p_net) <0) {
+      E_past = p_E + E_past
+      p_net = p_net - p_E/e_E
     }
   }
-  if (I_net >= 0) {
-    E = E_past + remaining_energy_allocation(e_S, e_E, lambda_a)*e_E*I_net
-    S = S_past + (1-remaining_energy_allocation(e_S, e_E, lambda_a))*e_S*I_net
+  if (p_net >= 0) {
+    E = E_past + remaining_energy_allocation(e_S, e_E, lambda_a)*e_E*p_net
+    S = S_past + (1-remaining_energy_allocation(e_S, e_E, lambda_a))*e_S*p_net
   }
   l = (S/c_1)^(1/3)
   output <- c(E,l)
