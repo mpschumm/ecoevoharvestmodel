@@ -73,7 +73,7 @@ Sewall F, Norcross B, Vollenweider J, Heintz R. Growth, energy storage, and feed
 
 **Energy allocation**
 
-Equation for interconverting between the structural mass of an age cohort's individuals at the previous timestep, and those individuals' body length at the previous timestep, where S is structural mass in grams:
+Equation for interconverting between the structural mass of an age cohort's individuals at the previous timestep, and those individuals' body length $l$ at the previous timestep, where S is structural mass in grams:
 
 (Eq. 1) $\large S_{t-1}(l_{t-1})=c_{1} \times (l_{t-1})^{3}$
 
@@ -90,6 +90,7 @@ r =6
 # In meters
 a_bar = 0.2
 lambda_min=0
+
 lambda_max=1.3
 
 for (i in 1:100) {
@@ -103,7 +104,7 @@ abline(h=1.3)
 
 The cost of maintenance, where E is reversible mass in grams:
 
-(Eq. 4) $\large C_{m}(S,E) = c_{S}S + c_{E}E$
+(Eq. 4) $\large C_{m}(S,E) = c_{S}S + c_{E}E$ where $c_{S}, c_{E}$ are tissue specific multipliers.
 
 The net intake of energy, after maintenance has occurred:
 
@@ -122,7 +123,7 @@ where $e_E$ and $e_S$ are efficiencies for conversions between energy intake and
 
 (Eq. 7) **if $\rho_{net} > 0$ & $\lambda_{l} > \frac{E_{t-1}}{S_{t-1}}$:**
 
-Calculate the amount of energy needed to bring Rev/Struct, or actual $\lambda$, up to $\lambda_{l}$.
+Calculate the amount of energy needed to bring actual E/S (Rev/Struct), or $\lambda$, up to $\lambda_{l}$.
 
 $\large \rho_E = (\lambda_{l}S_{t-1}-E_{t-1})/e_{E}$
 
@@ -170,23 +171,27 @@ This has the effect of acting to maintain a certain ratio of reversible to irrev
 
 **Reproduction**
 
-The NON-SPAWNING cost of reproduction, in grams.
+The NON-SPAWNING/non-gamete cost (e.g., costs of movement to spawning site, etc.) of reproduction, in grams:
 
 (Eq. 9) $\large C_R(S) = r_{0}S^{r1}$
 
-Total spawning mass (a cohort is spawning only if $wE>C_R(S)$, AND only if is is the right time of year).
+Total spawning mass (a cohort is spawning only if $wE>C_R(S)$, AND only if is is the right time of year):
 
-(Eq. 10) $\large spawn mass(g.) = wE - C_R(S)$ where w corresponds to fraction of reversible biomass available for spawning in addition to all of the non-spawning costs of reproduction. 
+(Eq. 10) $\large spawn mass(g.) = wE - C_R(S)$ where w corresponds to fraction of reversible biomass available for spawning in addition to all of the non-spawning costs of reproduction.
 
 Recruitment of age-0 fish (Ricker):
 
 (Eq. 11) $\large R= \alpha \times fecundity \times e^{- \beta \times fecundity}$
+
+The number of recruits R to the whole population is determined by a density-dependent Ricker model. Fecundity is calculated from mass devoted to reproduction, times an egg packing constant (eggs per kg). 
 
 &nbsp;
 
 **Mortality**
 
 (Eq. 12) $\large N_{t} = N_{t-1} \times exp(-Fishing \times selectivity(length) - m -(m_{p,max} - m) \times e^{-z_pL} - m_{c,max} \times e^{-z_c \lambda})$
+
+There are FOUR terms included in the exponent for instantaneous mortality. The first term is fishing mortality multiplied by an increasing selectivity function of length (larger fish are more selected for harvest), the second is natural background mortality, the third is additional mortality due to predation ($m_{p,max}$) mutliplied by an exponential decreasing function of length (larger fish experience less predation), and the fourth is additional mortality ($m_{c,max}$) due to poor body condition mutliplied by an exponential decreasing function of body condition (higher body condition fish don't experience additional mortality due to low body condition). 
 
 ```{r}
 curve(exp(-8*x), from =0, to=1, xlab="Length in m.", ylab="Additional natural mortality")
@@ -206,9 +211,12 @@ curve(1/(1+exp(-0.2*(x - 50))), from =0, to=150, xlab="Length in cm.", ylab="pro
 | Parameters             | Definitions                                                                                                                                                                                                              |   |   |
 |------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---|---|
 | $E, S$                 | The amounts of reversible and structural biomass in a fish, in grams                                                                                                                                                     |   |   |
+| $\lambda$              | The (length-specific) optimal ratio of E/S, which the fish will attempt to achieve with any surplus $\rho$                                                                                                               |   |   |
+| l                      | length of the fish                                                                                                                                                                                                       |   |   |
 | $r$                    | Steepness of target Rev/Struct or E/S (or $\lambda_{age}$) with age                                                                                                                                                      |   |   |
 | $\bar{a}$              | the age at which the function has an inflection point                                                                                                                                                                    |   |   |
 | $\rho_0, \rho_1$       | constant multiplier and exponent for determining density-independent energy intake based on amount of structural biomass                                                                                                 |   |   |
+| $\rho$                 | Intake of energy from assimilation at a time step                                                                                                                                                                        |   |   |
 | $c_{1}$                | scaling parameter for calculating structural biomass from fish length                                                                                                                                                    |   |   |
 | $\lambda_{max}$        | = 1.3 = maximum E/S ratio a fish can achieve in its life                                                                                                                                                                 |   |   |
 | $c_S, c_E$             | multipliers for obtaining cost of maintenance of structural mass and reversible mass, respectively                                                                                                                       |   |   |
@@ -313,6 +321,12 @@ packing = 4.45e6
 z_c=7
 # Parameter for exponential decline in predation mortality with increased body length
 z_p=8
+# Resource density
+RD = 300000000
+# Consumption with resource density half-saturation constant
+K_RD = 1000000
+# Variability in resource
+sd_RD = 0.1
 
 # GROWTH FUNCTIONS
 
@@ -328,7 +342,7 @@ intrinsic_lambda <- function(l, l_bar, r, lambda_min, lambda_max) {
 
 # Energy intake for the fish per year, dependent on fish structural biomass
 size_dependent_energy_intake <- function(S, p_0, p_1) {
-  return(p_0*(S)^(p_1))
+  return(p_0*(S)^(p_1)*max(rnorm(1,1,sd=sd_RD),0)*(RD/(K_RD+RD)))
 }
 
 # Calculate the cost of the year of maintaining current structural and reversible biomass
