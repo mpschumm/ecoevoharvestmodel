@@ -326,7 +326,9 @@ RD = 300000000
 # Consumption with resource density half-saturation constant
 K_RD = 1000000
 # Variability in resource
-sd_RD = 0.1
+sd_RD = 0
+# How much energy intake is affected by changes in resources (1=no change)
+resource = 1
 
 # GROWTH FUNCTIONS
 
@@ -342,7 +344,7 @@ intrinsic_lambda <- function(l, l_bar, r, lambda_min, lambda_max) {
 
 # Energy intake for the fish per year, dependent on fish structural biomass
 size_dependent_energy_intake <- function(S, p_0, p_1) {
-  return(p_0*(S)^(p_1)*max(rnorm(1,1,sd=sd_RD),0)*(RD/(K_RD+RD)))
+  return(resource*p_0*(S)^(p_1))
 }
 
 # Calculate the cost of the year of maintaining current structural and reversible biomass
@@ -509,9 +511,11 @@ lengths_at_t1(genotypes)
 
 # Run the model
 for (t in 2:runtime) {
+  resource = max(rnorm(1,1,sd=sd_RD),0)*(RD/(K_RD+RD))
   b_t=0
   if (t == round(add_genotypes/timescale)) {
     Fishing = log(exp(-0.2)^(1/(365/timescale)))*(-1)
+    sd_RD = 0.02
   }
   for (genotype in 1:genotypes) {
     age_dist = get(paste("age_dist_",genotype,sep=""))
