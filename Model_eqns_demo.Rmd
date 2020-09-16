@@ -514,8 +514,8 @@ for (t in 2:runtime) {
   resource = max(rnorm(1,1,sd=sd_RD),0)*(RD/(K_RD+RD))
   b_t=0
   if (t == round(add_genotypes/timescale)) {
-    Fishing = log(exp(-0.2)^(1/(365/timescale)))*(-1)
-    sd_RD = 0.02
+    Fishing = log(exp(-0)^(1/(365/timescale)))*(-1)
+    sd_RD = 0.08
   }
   for (genotype in 1:genotypes) {
     age_dist = get(paste("age_dist_",genotype,sep=""))
@@ -558,6 +558,11 @@ for (t in 2:runtime) {
   }
 }
 
+```
+
+**Scenario 1: No harvesting, constant resource**
+
+```{r, echo=F}
 ### Analysis code
 
 approach <- vector(mode="numeric", length=runtime)
@@ -567,20 +572,21 @@ for (i in 1:runtime) {
   } 
 }
 # Plot population dynamics
-plot(approach[seq(4,length(approach), by=4)], col="black", pch=19, type="l", ylab="Abundance",xlab="Time (3 months)")
+plot(approach[seq(round(add_genotypes/timescale),length(approach), by=4)],lty=1, pch=19, type="l", ylab="Abundance",xlab="Time (3 months)", ylim=c(0,max(approach)), main= "No harvesting, constant resource")
 approach <- vector(mode="numeric", length=runtime)
 for (i in 1:runtime) {
   approach[i] <- sum(age_dist_1[1:longevity,i])
 }
-lines(approach[seq(4,length(approach), by=4)], col="red", pch=19, type="l")
-cols <- c("orange","green","blue","purple")
+lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=2, pch=19, type="l")
+cols <- c(3,4,5,6)
 for (j in 2:genotypes) {
   approach <- vector(mode="numeric", length=runtime)
   for (i in 1:runtime) {
     approach[i] <- sum(get(paste("age_dist_",j, sep=""))[1:longevity,i])
   }
-  lines(approach[seq(4,length(approach), by=4)], col=cols[j-1], pch=19)
+  lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=cols[j-1], pch=19)
 }
+legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
 ```
 
 **EVALUATING GENOTYPE RELATIVE FITNESS**
