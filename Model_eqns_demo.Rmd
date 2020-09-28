@@ -511,7 +511,7 @@ lengths_at_t1(genotypes)
 
 # Run the model
 for (t in 2:runtime) {
-  resource = max(rnorm(1,1,sd=sd_RD),0)*(RD/(K_RD+RD))
+  resource = (max(rnorm(1,1,sd=sd_RD),0)*RD/(K_RD+ max(rnorm(1,1,sd=sd_RD),0)*RD))
   b_t=0
   if (t == round(add_genotypes/timescale)) {
     Fishing = log(exp(-0)^(1/(365/timescale)))*(-1)
@@ -594,7 +594,7 @@ legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
 ```{r, echo=F}
 # Run the model
 for (t in (round(add_genotypes/timescale)):runtime) {
-  resource = max(rnorm(1,1,sd=sd_RD),0)*(RD/(K_RD+RD))
+  resource = (max(rnorm(1,1,sd=sd_RD),0)*RD/(K_RD+ max(rnorm(1,1,sd=sd_RD),0)*RD))
   b_t=0
   if (t == round(add_genotypes/timescale)) {
     Fishing = log(exp(-0.2)^(1/(365/timescale)))*(-1)
@@ -672,11 +672,11 @@ legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
 ```{r, echo=F}
 # Run the model
 for (t in (round(add_genotypes/timescale)):runtime) {
-  resource = max(rnorm(1,1,sd=sd_RD),0)*(RD/(K_RD+RD))
+  resource = (max(rnorm(1,1,sd=sd_RD),0)*RD/(K_RD+ max(rnorm(1,1,sd=sd_RD),0)*RD))
   b_t=0
   if (t == round(add_genotypes/timescale)) {
     Fishing = log(exp(-0)^(1/(365/timescale)))*(-1)
-    sd_RD = 0.16
+    sd_RD = 0.15
   }
   for (genotype in 1:genotypes) {
     age_dist = get(paste("age_dist_",genotype,sep=""))
@@ -750,7 +750,7 @@ legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
 ```{r, echo=F}
 # Run the model
 for (t in (round(add_genotypes/timescale)-10):runtime) {
-  resource = max(rnorm(1,1,sd=sd_RD),0)*(RD/(K_RD+RD))
+  resource = (max(rnorm(1,1,sd=sd_RD),0)*RD/(K_RD+ max(rnorm(1,1,sd=sd_RD),0)*RD))
   b_t=0
   if (t == round(add_genotypes/timescale)) {
     Fishing = log(exp(-0.2)^(1/(365/timescale)))*(-1)
