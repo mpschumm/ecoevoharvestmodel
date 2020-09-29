@@ -371,6 +371,7 @@ remaining_energy_allocation <- function(e_S, e_E, lambda_a) {
 # Obtain R and S for a cohort prior to its reproduction (or failure to reproduce) that year
 get_pre_reproductive_size <- function(E_past, l_past, a) {
   S_past = structural_mass(l_past)
+  S = S_past
   lambda_a = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
   p_net = size_dependent_energy_intake(S_past, p_0, p_1) - maintenance_cost(S_past, E_past, c_S, c_E)
   if (p_net < 0) {
