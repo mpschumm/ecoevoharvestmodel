@@ -237,26 +237,26 @@ curve(1/(1+exp(-0.2*(x - 50))), from =0, to=150, xlab="Length in cm.", ylab="pro
 **CODE**
 
 ```{r}
-# genotype1r = 6
-# genotype2r = 10
-# genotype1l_bar = 0.2
-# genotype2l_bar = 0.2
-# genotype1w = 0.674
-# genotype2w = 0.674
+genotype1r = 6
+genotype2r = 8
+genotype1l_bar = 0.2
+genotype2l_bar = 0.2
+genotype1w = 0.674
+genotype2w = 0.674
 
 # genotype1r = 6
 # genotype2r = 6
 # genotype1l_bar = 0.2
 # genotype2l_bar = 0.2
-# genotype1w = 0.674
-# genotype2w = 0.7
+# genotype1w = 0.1
+# genotype2w = 0.674
 
-genotype1r = 6
-genotype2r = 6
-genotype1l_bar = 0.2
-genotype2l_bar = -0.001
-genotype1w = 0.674
-genotype2w = 0.674
+# genotype1r = 6
+# genotype2r = 6
+# genotype1l_bar = 0.3
+# genotype2l_bar = 0.2
+# genotype1w = 0.674
+# genotype2w = 0.674
 
 # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
 longevity_days = 9125
@@ -278,7 +278,7 @@ initialize_pop_matrices <- function(longevity, runtime, genotype) {
   # Multiplied by 3 because we'll be storing cohorts' reproductive biomass and lengths 
   age_dist=matrix(0L, nrow=longevity*3, ncol=runtime+1)
   # Add (arbitrarily) 10000 individuals to age=10 to start with
-  age_dist[round(3650/timescale), 1] = 10000
+  age_dist[round(3650/timescale), 1] = 1000000
   return(age_dist)
 }
 
@@ -397,14 +397,15 @@ get_pre_reproductive_size <- function(E_past, l_past, a) {
     # Gives amount of grams needed to raise E/S to lambda_l - not taking efficiency into account yet
     p_E = p_E_raising_lambda(lambda_a, S_past, E_past)
     if ((p_E/e_E - p_net) >=0) {
-      E_past = p_net*e_E + E_past
-      p_net = 0
-    }
-    if ((p_E/e_E - p_net) <0) {
       E_past = p_E + E_past
       p_net = p_net - p_E/e_E
     }
+    if ((p_E/e_E - p_net) <0) {
+      E_past = p_net*e_E + E_past
+      p_net = 0
+    }
   }
+  E = E_past
   if (p_net >= 0) {
     E = E_past + remaining_energy_allocation(e_S, e_E, lambda_a)*e_E*p_net
     S = S_past + (1-remaining_energy_allocation(e_S, e_E, lambda_a))*e_S*p_net
@@ -562,7 +563,7 @@ for (t in 2:runtime) {
     age_dist[1+(longevity), t] =  0.3066
     age_dist[1+2*(longevity), t] = 0.0493
     for (age in 2:longevity) {
-      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), 1], age-1)
+      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), t-1], age-1)
       age_dist[age+(longevity), t] = new_E_l[1]
       age_dist[age+(2*longevity), t] = new_E_l[2]
     
@@ -648,7 +649,7 @@ for (t in (round(add_genotypes/timescale)):runtime) {
     age_dist[1+(longevity), t] =  0.3066
     age_dist[1+2*(longevity), t] = 0.0493
     for (age in 2:longevity) {
-      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), 1], age-1)
+      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), t-1], age-1)
       age_dist[age+(longevity), t] = new_E_l[1]
       age_dist[age+(2*longevity), t] = new_E_l[2]
     
@@ -735,7 +736,7 @@ for (t in (round(add_genotypes/timescale)):runtime) {
     age_dist[1+(longevity), t] =  0.3066
     age_dist[1+2*(longevity), t] = 0.0493
     for (age in 2:longevity) {
-      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), 1], age-1)
+      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), t-1], age-1)
       age_dist[age+(longevity), t] = new_E_l[1]
       age_dist[age+(2*longevity), t] = new_E_l[2]
     
@@ -824,7 +825,7 @@ for (t in (round(add_genotypes/timescale)-10):runtime) {
     age_dist[1+(longevity), t] =  0.3066
     age_dist[1+2*(longevity), t] = 0.0493
     for (age in 2:longevity) {
-      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), 1], age-1)
+      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), t-1], age-1)
       age_dist[age+(longevity), t] = new_E_l[1]
       age_dist[age+(2*longevity), t] = new_E_l[2]
     
