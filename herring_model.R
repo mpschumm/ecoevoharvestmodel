@@ -1,5 +1,7 @@
 # Huss et al. 2012 herring model
 
+# key "parameteriz"
+
 genotype1r = 6
 genotype2r = 10
 genotype1w = 0.674
