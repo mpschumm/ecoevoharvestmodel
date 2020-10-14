@@ -1,3 +1,5 @@
+# REPRODUCTION FUNCTIONS
+
 # Calculate spawning stock biomass
 fecundity <- function(ages, t, age_dist, g) {
   # Parameterizing genotypes

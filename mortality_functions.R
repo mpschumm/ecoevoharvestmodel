@@ -1,3 +1,5 @@
+# MORTALITY FUNCTIONS
+
 # Fishing mortality is size selective
 selective_mortality <- function(length) {
   1 / (1 + exp(-q_f*(length - mincatchsize)*100))

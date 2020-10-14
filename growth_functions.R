@@ -1,3 +1,5 @@
+# GROWTH FUNCTIONS
+
 # For obtaining structural mass
 structural_mass <- function(l) {
   return(c_1*(l)^3)
@@ -37,23 +39,25 @@ remaining_energy_allocation <- function(e_S, e_E, lambda_a) {
 # Obtain R and S for a cohort prior to its reproduction (or failure to reproduce) that year
 get_pre_reproductive_size <- function(E_past, l_past, a) {
   S_past = structural_mass(l_past)
+  S = S_past
   lambda_a = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
   p_net = size_dependent_energy_intake(S_past, p_0, p_1) - maintenance_cost(S_past, E_past, c_S, c_E)
   if (p_net < 0) {
-    E <- max(0,negative_p_net(E, p_net, e_E))
+    E <- max(0,negative_p_net(E_past, p_net, e_E))
   }
   if (p_net >= 0 & lambda_a > (E_past/S_past)) {
     # Gives amount of grams needed to raise E/S to lambda_l - not taking efficiency into account yet
     p_E = p_E_raising_lambda(lambda_a, S_past, E_past)
     if ((p_E/e_E - p_net) >=0) {
-      E_past = p_net*e_E + E_past
-      p_net = 0
-    }
-    if ((p_E/e_E - p_net) <0) {
       E_past = p_E + E_past
       p_net = p_net - p_E/e_E
     }
+    if ((p_E/e_E - p_net) <0) {
+      E_past = p_net*e_E + E_past
+      p_net = 0
+    }
   }
+  E = E_past
   if (p_net >= 0) {
     E = E_past + remaining_energy_allocation(e_S, e_E, lambda_a)*e_E*p_net
     S = S_past + (1-remaining_energy_allocation(e_S, e_E, lambda_a))*e_S*p_net
