@@ -1,3 +1,5 @@
+# Huss et al. 2012 herring model
+
 genotype1r = 6
 genotype2r = 10
 genotype1w = 0.674
@@ -6,7 +8,7 @@ genotype2w = 0.674
 # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
 longevity_days = 9125
 # set runtime to any arbitrary desired value, in units of days
-runtime_days = 150*365
+runtime_days = 150*365 # for 150 years
 genotypes = 2
 # Setting the length of the timestep in days
 timescale= 91.25
