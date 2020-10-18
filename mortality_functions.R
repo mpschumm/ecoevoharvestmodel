@@ -10,11 +10,11 @@ mortality <- function(age) {
   lambda <- ((age_dist[age+(longevity),t]))/structural_mass(age_dist[age+(2*longevity),t])
   length = age_dist[age+(2*longevity),t]
   if (age < longevity) {
-    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_max*exp(-z_c*lambda) - (m_max-m)*exp(-z_p*length) )
+    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*lambda) - (m_p_max-m)*exp(-z_p*length) )
   }
   if (age == longevity) {
-    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_max*exp(-z_c*lambda) - (m_max-m)*exp(-z_p*length))
-    N_t = age_dist[age,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_max*exp(-z_c*lambda) - (m_max-m)*exp(-z_p*length))
+    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*lambda) - (m_p_max-m)*exp(-z_p*length))
+    N_t = age_dist[age,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*lambda) - (m_p_max-m)*exp(-z_p*length))
   }
   return(N_t)
 }
