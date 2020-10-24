@@ -3,18 +3,34 @@
 
 # key "parameteriz"
 
+# genotype1r = 4
+# genotype2r = 8
+# genotype1l_bar = 0.2
+# genotype2l_bar = 0.2
+# genotype1w = 0.674
+# genotype2w = 0.674
+
+# genotype1r = 6
+# genotype2r = 6
+# genotype1l_bar = 0.2
+# genotype2l_bar = 0.2
+# genotype1w = 0.7
+# genotype2w = 0.3
+
 genotype1r = 6
-genotype2r = 10
+genotype2r = 6
+genotype1l_bar = 0.2
+genotype2l_bar = 0
 genotype1w = 0.674
 genotype2w = 0.674
 
 # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
 longevity_days = 9125
-# set runtime to any arbitrary desired value, in units of days
-runtime_days = 150*365 # for 150 years
+# set runtime to any arbitrary desired value, in units of days, that is a multiple of 365
+runtime_days = 150*365
 genotypes = 2
-# Setting the length of the timestep in days
-timescale= 91.25
+# Setting the length of the timestep in days - set to any fraction of 365
+timescale= (365)/4
 # Setting run time and longevity to units of time steps
 runtime = round(runtime_days/timescale)
 longevity = round(longevity_days/timescale)
@@ -27,8 +43,8 @@ initialize_pop_matrices <- function(longevity, runtime, genotype) {
   # Initialize matrix of columns (years) and rows (age classes)
   # Multiplied by 3 because we'll be storing cohorts' reproductive biomass and lengths 
   age_dist=matrix(0L, nrow=longevity*3, ncol=runtime+1)
-  # Add (arbitrarily) 10000 individuals to age=10 to start with
-  age_dist[round(3650/timescale), 1] = 10000
+  # Add (arbitrarily) 1000000 individuals to age=10 to start with
+  age_dist[round(3650/timescale), 1] = 1000000
   return(age_dist)
 }
 
@@ -66,8 +82,8 @@ r_0 = 6
 r_1 = 0.6
 # Effectively, reproductive investment (fraction of reversible mass devoted to reproduction)
 w= 0.674
-# Instantaneous base mortality rate
-m = log(0.9995^timescale)*(-1)
+# Instantaneous base mortality rate, derived from daily instantaneous probability of survival for M=-0.2, multiplied to -1 to make positive
+m = log(0.999452^timescale)*(-1)
 # Instantaneous fishing mortality
 Fishing = 0
 # Ricker
@@ -80,7 +96,9 @@ mincatchsize = 0.5
 # Total population biomass
 b_t=0
 # Increased natural mortality rate at E/S = 0 or S = 0 
-m_max=log(0.994^timescale)*(-1)
+# For roughly 0.5 year-based instantaneous mortality at ~1 yrs., Koster et al 2003
+m_p_max=log(0.9986^timescale)*(-1)
+m_c_max=log(0.95^timescale)*(-1)
 # Egg packing constant
 packing = 4.45e6
 # Parameter for exponential decline in condition-dependent mortality with improved body condition
@@ -88,7 +106,7 @@ z_c=7
 # Parameter for exponential decline in predation mortality with increased body length
 z_p=8
 # Resource density
-RD = 300000000
+RD = 9000000
 # Consumption with resource density half-saturation constant
 K_RD = 1000000
 # Variability in resource
@@ -137,10 +155,11 @@ remaining_energy_allocation <- function(e_S, e_E, lambda_a) {
 # Obtain R and S for a cohort prior to its reproduction (or failure to reproduce) that year
 get_pre_reproductive_size <- function(E_past, l_past, a) {
   S_past = structural_mass(l_past)
+  S = S_past
   lambda_a = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
   p_net = size_dependent_energy_intake(S_past, p_0, p_1) - maintenance_cost(S_past, E_past, c_S, c_E)
   if (p_net < 0) {
-    E <- max(0,negative_p_net(E, p_net, e_E))
+    E <- max(0,negative_p_net(E_past, p_net, e_E))
   }
   if (p_net >= 0 & lambda_a > (E_past/S_past)) {
     # Gives amount of grams needed to raise E/S to lambda_l - not taking efficiency into account yet
@@ -154,6 +173,7 @@ get_pre_reproductive_size <- function(E_past, l_past, a) {
       p_net = p_net - p_E/e_E
     }
   }
+  E = E_past
   if (p_net >= 0) {
     E = E_past + remaining_energy_allocation(e_S, e_E, lambda_a)*e_E*p_net
     S = S_past + (1-remaining_energy_allocation(e_S, e_E, lambda_a))*e_S*p_net
@@ -240,25 +260,26 @@ selective_mortality <- function(length) {
 
 # Mortality drops as E/S increases, as S increases
 mortality <- function(age) {
-  lambda <- ((age_dist[age+(longevity),t]))/structural_mass(age_dist[age+(2*longevity),t])
-  length = age_dist[age+(2*longevity),t]
+  cond <- 100*(((age_dist[age-1+(longevity),t-1]))+structural_mass(age_dist[age-1+(2*longevity),t-1]))/((100*age_dist[age-1+(2*longevity),t-1])^3)
+  length = age_dist[age-1+(2*longevity),t-1]
   if (age < longevity) {
-    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_max*exp(-z_c*lambda) - (m_max-m)*exp(-z_p*length) )
+    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*cond) - (m_p_max-m)*exp(-z_p*length) )
   }
   if (age == longevity) {
-    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_max*exp(-z_c*lambda) - (m_max-m)*exp(-z_p*length))
-    N_t = age_dist[age,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_max*exp(-z_c*lambda) - (m_max-m)*exp(-z_p*length))
+    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*cond) - (m_p_max-m)*exp(-z_p*length))
+    N_t = age_dist[age,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*cond) - (m_p_max-m)*exp(-z_p*length))
   }
   return(N_t)
 }
 
+# Initial masses and lengths for age 0 cod from table 2.2.1 from Ianelli et al., and (for the lambda ratio) from Audzijonyte and Richards
 # Calculate lengths (and reversible masses) at each age for the model with no density dependence
 lengths_at_t1 <- function(genotypes) {
   t=1
   for (g in 1:genotypes) {
     age_dist = get(paste("age_dist_",g,sep=""))
-    age_dist[1+(longevity), 1] = 0.3066
-    age_dist[1+2*(longevity), 1] = 0.0493
+    age_dist[1+(longevity), 1] = 3.938
+    age_dist[1+2*(longevity), 1] = 0.1102
     for (i in 2:longevity) {
       new_E_l = get_pre_reproductive_size(age_dist[i-1+(longevity), 1],age_dist[i-1+2*(longevity), 1], i-1)
       age_dist[i+(longevity), 1] = new_E_l[1]
@@ -275,9 +296,13 @@ lengths_at_t1 <- function(genotypes) {
 # Initialize lengths and reversible masses for ages
 lengths_at_t1(genotypes)
 
+# Set runtime so is extra time left in end of model, to account for recruitment lag
+runtime <- (runtime - (round(365/timescale)))
+
 # Run the model
 for (t in 2:runtime) {
-  resource = (max(rnorm(1,1,sd=sd_RD),0)*RD/(K_RD+ max(rnorm(1,1,sd=sd_RD),0)*RD))
+  random_multiplier <- max(rnorm(1,1,sd=sd_RD),0)
+  resource = (random_multiplier*RD/(K_RD+ random_multiplier*RD))  
   b_t=0
   if (t == round(add_genotypes/timescale)) {
     Fishing = log(exp(-0)^(1/(365/timescale)))*(-1)
@@ -297,18 +322,20 @@ for (t in 2:runtime) {
       if (genotype==1) {
         # a_bar = 36.5
         r=genotype1r
+        l_bar = genotype1l_bar
       }
       if (genotype==2) {
         # a_bar = 365*2
         r=genotype2r
+        l_bar = genotype2l_bar
       }
     }
     
     age_dist = get(paste("age_dist_",genotype,sep=""))
-    age_dist[1+(longevity), t] =  0.3066
-    age_dist[1+2*(longevity), t] = 0.0493
+    age_dist[1+(longevity), t] =  3.938
+    age_dist[1+2*(longevity), t] = 0.1102
     for (age in 2:longevity) {
-      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), 1], age-1)
+      new_E_l = get_pre_reproductive_size(age_dist[age-1+(longevity), t-1],age_dist[age-1+2*(longevity), t-1], age-1)
       age_dist[age+(longevity), t] = new_E_l[1]
       age_dist[age+(2*longevity), t] = new_E_l[2]
       
@@ -324,7 +351,6 @@ for (t in 2:runtime) {
   }
 }
 
-
 ### Analysis code
 
 approach <- vector(mode="numeric", length=runtime)
@@ -339,13 +365,13 @@ approach <- vector(mode="numeric", length=runtime)
 for (i in 1:runtime) {
   approach[i] <- sum(age_dist_1[1:longevity,i])
 }
-lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=2, pch=19, type="l")
+lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=2, pch=19, type="l", col="blue")
 cols <- c(3,4,5,6)
 for (j in 2:genotypes) {
   approach <- vector(mode="numeric", length=runtime)
   for (i in 1:runtime) {
     approach[i] <- sum(get(paste("age_dist_",j, sep=""))[1:longevity,i])
   }
-  lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=cols[j-1], pch=19)
+  lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=cols[j-1], pch=19, col="red")
 }
-legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
+legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3, col=c("black","blue","red"))
