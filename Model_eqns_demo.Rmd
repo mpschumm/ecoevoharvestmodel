@@ -255,8 +255,8 @@ curve(1/(1+exp(-0.2*(x - 50))), from =0, to=150, xlab="Length in cm.", ylab="pro
 
 genotype1r = 6
 genotype2r = 6
-genotype1l_bar = 0.23
-genotype2l_bar = 0.1
+genotype1l_bar = 0.2
+genotype2l_bar = 0
 genotype1w = 0.674
 genotype2w = 0.674
 
@@ -332,7 +332,8 @@ mincatchsize = 0.5
 # Total population biomass
 b_t=0
 # Increased natural mortality rate at E/S = 0 or S = 0 
-m_p_max=log(0.99^timescale)*(-1)
+# For roughly 0.5 year-based instantaneous mortality at ~1 yrs., Koster et al 2003
+m_p_max=log(0.9986^timescale)*(-1)
 m_c_max=log(0.95^timescale)*(-1)
 # Egg packing constant
 packing = 4.45e6
@@ -400,12 +401,12 @@ get_pre_reproductive_size <- function(E_past, l_past, a) {
     # Gives amount of grams needed to raise E/S to lambda_l - not taking efficiency into account yet
     p_E = p_E_raising_lambda(lambda_a, S_past, E_past)
     if ((p_E/e_E - p_net) >=0) {
-      E_past = p_E + E_past
-      p_net = p_net - p_E/e_E
-    }
-    if ((p_E/e_E - p_net) <0) {
       E_past = p_net*e_E + E_past
       p_net = 0
+    }
+    if ((p_E/e_E - p_net) <0) {
+      E_past = p_E + E_past
+      p_net = p_net - p_E/e_E
     }
   }
   E = E_past
@@ -495,18 +496,19 @@ selective_mortality <- function(length) {
 
 # Mortality drops as E/S increases, as S increases
 mortality <- function(age) {
-  lambda <- ((age_dist[age+(longevity),t]))/structural_mass(age_dist[age+(2*longevity),t])
-  length = age_dist[age+(2*longevity),t]
+  cond <- 100*(((age_dist[age-1+(longevity),t-1]))+structural_mass(age_dist[age-1+(2*longevity),t-1]))/((100*age_dist[age-1+(2*longevity),t-1])^3)
+  length = age_dist[age-1+(2*longevity),t-1]
   if (age < longevity) {
-    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*lambda) - (m_p_max-m)*exp(-z_p*length) )
+    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*cond) - (m_p_max-m)*exp(-z_p*length) )
   }
   if (age == longevity) {
-    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*lambda) - (m_p_max-m)*exp(-z_p*length))
-    N_t = age_dist[age,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*lambda) - (m_p_max-m)*exp(-z_p*length))
+    N_t = age_dist[age-1,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*cond) - (m_p_max-m)*exp(-z_p*length))
+    N_t = age_dist[age,t-1]*exp( -m + -Fishing*selective_mortality(length) - m_c_max*exp(-z_c*cond) - (m_p_max-m)*exp(-z_p*length))
   }
   return(N_t)
 }
 
+# Initial masses and lengths for age 0 cod from table 2.2.1 from Ianelli et al., and (for the lambda ratio) from Audzijonyte and Richards
 # Calculate lengths (and reversible masses) at each age for the model with no density dependence
 lengths_at_t1 <- function(genotypes) {
   t=1
@@ -604,16 +606,16 @@ approach <- vector(mode="numeric", length=runtime)
 for (i in 1:runtime) {
   approach[i] <- sum(age_dist_1[1:longevity,i])
 }
-lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=2, pch=19, type="l")
+lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=2, pch=19, type="l", col="blue")
 cols <- c(3,4,5,6)
 for (j in 2:genotypes) {
   approach <- vector(mode="numeric", length=runtime)
   for (i in 1:runtime) {
     approach[i] <- sum(get(paste("age_dist_",j, sep=""))[1:longevity,i])
   }
-  lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=cols[j-1], pch=19)
+  lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=cols[j-1], pch=19, col="red")
 }
-legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
+legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3, col=c("black","blue","red"))
 ```
 
 **Scenario 2: Harvesting, constant resource (DETERMINISTIC)**
@@ -685,25 +687,31 @@ approach <- vector(mode="numeric", length=runtime)
 for (i in 1:runtime) {
   approach[i] <- sum(age_dist_1[1:longevity,i])
 }
-lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=2, pch=19, type="l")
+lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=2, pch=19, type="l", col="blue")
 cols <- c(3,4,5,6)
 for (j in 2:genotypes) {
   approach <- vector(mode="numeric", length=runtime)
   for (i in 1:runtime) {
     approach[i] <- sum(get(paste("age_dist_",j, sep=""))[1:longevity,i])
   }
-  lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=cols[j-1], pch=19)
+  lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=cols[j-1], pch=19, col="red")
 }
-legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
+legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3, col=c("black","blue","red"))
 ```
 
 **Scenario 3: No harvesting, variable resource (ONE RANDOM RUN)**
 
 ```{r, echo=F}
+total_r_nh <- vector(mode="numeric")
+g_1_r_nh <- vector(mode="numeric")
+g_2_r_nh <- vector(mode="numeric")
+
+for (rrun_counter in 1:10) {
+
 # Need to take this loop out, integrate into rest of code
 random_resources <- vector(mode="numeric", length=runtime)
 for (r in 1:runtime) {
-  random_resources[r] <- max(rnorm(1,1,sd=0.3),0)
+  random_resources[r] <- max(rnorm(1,1,sd=1),0)
 }
 
 # Run the model
@@ -766,6 +774,7 @@ for (i in 1:runtime) {
     approach[i] <- approach[i]+ sum(get(paste("age_dist_", j, sep=""))[1:longevity,i])
   } 
 }
+total_r_nh <- c(total_r_nh, approach[seq(round(add_genotypes/timescale),length(approach), by=4)])
 # Plot population dynamics
 plot(approach[seq(round(add_genotypes/timescale),length(approach), by=4)],lty=1, pch=19, type="l", ylab="Abundance",xlab="Time (units of 3 month intervals)", ylim=c(0,max(approach)), main= "No harvesting, variable resource")
 approach <- vector(mode="numeric", length=runtime)
@@ -773,6 +782,7 @@ for (i in 1:runtime) {
   approach[i] <- sum(age_dist_1[1:longevity,i])
 }
 lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=2, pch=19, type="l")
+g_1_r_nh <- c(g_1_r_nh, approach[seq(round(add_genotypes/timescale),length(approach), by=4)])
 cols <- c(3,4,5,6)
 for (j in 2:genotypes) {
   approach <- vector(mode="numeric", length=runtime)
@@ -780,8 +790,11 @@ for (j in 2:genotypes) {
     approach[i] <- sum(get(paste("age_dist_",j, sep=""))[1:longevity,i])
   }
   lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=cols[j-1], pch=19)
+  g_2_r_nh <- c(g_2_r_nh, approach[seq(round(add_genotypes/timescale),length(approach), by=4)])
 }
 legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
+
+}
 
 plot((round(add_genotypes/timescale)):runtime, random_resources[(round(add_genotypes/timescale)):runtime], col="green", main="Variation in resources over time", xlab="Time", ylab="Total amt. resource in enironment", type="l")
 ```
@@ -789,10 +802,16 @@ plot((round(add_genotypes/timescale)):runtime, random_resources[(round(add_genot
 **Scenario 4: Harvesting, variable resource (ONE RANDOM RUN)**
 
 ```{r, echo=F}
+total_r_h <- vector(mode="numeric")
+g_1_r_h <- vector(mode="numeric")
+g_2_r_h <- vector(mode="numeric")
+
+for (rrun_counter in 1:10) {
+
 # Need to take this loop out, integrate into rest of code
 random_resources <- vector(mode="numeric", length=runtime)
 for (r in 1:runtime) {
-  random_resources[r] <- max(rnorm(1,1,sd=0.3),0)
+  random_resources[r] <- max(rnorm(1,1,sd=1),0)
 }
 
 # Run the model
@@ -855,6 +874,7 @@ for (i in 1:runtime) {
     approach[i] <- approach[i]+ sum(get(paste("age_dist_", j, sep=""))[1:longevity,i])
   } 
 }
+total_r_h <- c(total_r_h, approach[seq(round(add_genotypes/timescale),length(approach), by=4)])
 # Plot population dynamics
 plot(approach[seq(round(add_genotypes/timescale),length(approach), by=4)],lty=1, pch=19, type="l", ylab="Abundance",xlab="Time (units of 3 month intervals)", ylim=c(0,max(approach)), main= "Harvesting, variable resource")
 approach <- vector(mode="numeric", length=runtime)
@@ -862,6 +882,7 @@ for (i in 1:runtime) {
   approach[i] <- sum(age_dist_1[1:longevity,i])
 }
 lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=2, pch=19, type="l")
+g_1_r_h <- c(g_1_r_h, approach[seq(round(add_genotypes/timescale),length(approach), by=4)])
 cols <- c(3,4,5,6)
 for (j in 2:genotypes) {
   approach <- vector(mode="numeric", length=runtime)
@@ -869,8 +890,12 @@ for (j in 2:genotypes) {
     approach[i] <- sum(get(paste("age_dist_",j, sep=""))[1:longevity,i])
   }
   lines(approach[seq(round(add_genotypes/timescale),length(approach), by=4)], lty=cols[j-1], pch=19)
+  g_2_r_h <- c(g_2_r_h, approach[seq(round(add_genotypes/timescale),length(approach), by=4)])
 }
 legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
+
+
+}
 
 plot((round(add_genotypes/timescale)):runtime, random_resources[(round(add_genotypes/timescale)):runtime], col="green", main="Variation in resources over time", xlab="Time", ylab="Total amt. resource in enironment", type="l")
 ```
@@ -880,9 +905,12 @@ plot((round(add_genotypes/timescale)):runtime, random_resources[(round(add_genot
 Why is one genotype favored over the other? One genotype may result in better survival, or in more offspring produced over a lifetime. 
 
 ```{r}
-i_0 = 367
+# i_0 must be a year where there was recruitment
+i_0 = 443
 repro_vec = vector(length=longevity, mode="numeric")
 survivor_vec = vector(length=longevity, mode="numeric")
+length_vec_1 = vector(length=100, mode="numeric")
+cond_vec_1 = vector(length=100, mode="numeric")
 w = genotype1w
 r = genotype1r
 age_dist <- age_dist_1
@@ -891,23 +919,32 @@ repro_vec[1] <- 0
 for (i in 2:longevity) {
   repro_vec[i] <- max(0, (w*age_dist[i+(longevity),i_0+i] - (r_0*structural_mass(age_dist[i+(2*longevity),i_0+i]))^(r_1)))
   survivor_vec[i] <- age_dist[i,i_0+i]/(survivor_vec[1])
+   length_vec_1[i] <- age_dist[i+(2*longevity),i_0+i]
+   cond_vec_1[i] <- 100*(((age_dist[i+(longevity),i_0+i]))+structural_mass(age_dist[i+(2*longevity),i_0+i]))/((100*age_dist[i+(2*longevity),i_0+i])^3)
 }
 survivor_vec_1 <- survivor_vec
 repro_vec_1 <- repro_vec
 
-i_0 = 367
+i_0 = 443
 repro_vec = vector(length=100, mode="numeric")
 survivor_vec = vector(length=100, mode="numeric")
+length_vec = vector(length=100, mode="numeric")
+cond_vec = vector(length=100, mode="numeric")
 w = genotype2w
 r = genotype2r
 age_dist <- age_dist_2
 survivor_vec[1]<-age_dist[1,i_0+1]
 repro_vec[1] <- 0
 for (i in 2:longevity) {
- repro_vec[i] <- max(0, (w*age_dist[i+(longevity),i_0+i] - (r_0*structural_mass(age_dist[i+(2*longevity),i_0+i]))^(r_1)))
+  # Should really be relative recruitment
+  repro_vec[i] <- max(0, (w*age_dist[i+(longevity),i_0+i] - (r_0*structural_mass(age_dist[i+(2*longevity),i_0+i]))^(r_1)))
  survivor_vec[i] <- age_dist[i,i_0+i]/(survivor_vec[1])
+ length_vec[i] <- age_dist[i+(2*longevity),i_0+i]
+ cond <- 100*(((age_dist[age-1+(longevity),t-1]))+structural_mass(age_dist[age-1+(2*longevity),t-1]))/((100*age_dist[age-1+(2*longevity),t-1])^3)
+ cond_vec[i] <- 100*(((age_dist[i+(longevity),i_0+i]))+structural_mass(age_dist[i+(2*longevity),i_0+i]))/((100*age_dist[i+(2*longevity),i_0+i])^3)
 }
 plot((survivor_vec[2:length(survivor_vec)])-(survivor_vec_1[2:length(survivor_vec_1)]), ylab="Survivorship of genotype 2 - genotype 1", main="Survivorship advantage/disadvantage of\ngenotype 2 over 1", xlab="Age")
+plot((length_vec[2:length(survivor_vec)])-(length_vec_1[2:length(survivor_vec_1)]), ylab="Length of genotype 2 - genotype 1", main="Length advantage/disadvantage of\ngenotype 2 over 1", xlab="Age")
 plot(repro_vec-repro_vec_1, ylab="Reproduction of genotype 2 - genotype 1", main="Reproduction advantage/disadvantage of\ngenotype 2 over 1", xlab="Age")
 ```
 
@@ -929,6 +966,14 @@ points(seq(0.01,1,by=0.01), ratios, xlab="Age (years)", ylab="lambda_age", type=
  
  # Note to me - mass conversion, why does advantage plot look weird, go through other tricky bits, showing 10 sim runs each assuming main findings stay same, genotype vector fix, how to incorporate apply family, herring, fork, figures
 Where does this mortality come from in A+R
+^ We dealt with that, but should we look into mortalities from condition as well, where do they come from? Also, mortalities in "growth_curves.R"?
  
+There needs to be a penalty for maturing at a smaller size and the penalty has to be that the fish never reaches longest length, for energy acquisition and predator avoidance... but is not happening here. Am I bringing in too much energy? 
+
 it's right after reproducing, so it makes sense
 well...
+
+# THE ORDER OF MORTALITY (NOT FOLLOWING REPRODUCTION) IS AN ISSUE
+# MORTALITY SHOULD COME BEFORE BOTH?
+
+ # Why is survivorship increased with genotype/not changing with resource changes?

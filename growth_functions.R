@@ -49,12 +49,12 @@ get_pre_reproductive_size <- function(E_past, l_past, a) {
     # Gives amount of grams needed to raise E/S to lambda_l - not taking efficiency into account yet
     p_E = p_E_raising_lambda(lambda_a, S_past, E_past)
     if ((p_E/e_E - p_net) >=0) {
-      E_past = p_E + E_past
-      p_net = p_net - p_E/e_E
-    }
-    if ((p_E/e_E - p_net) <0) {
       E_past = p_net*e_E + E_past
       p_net = 0
+    }
+    if ((p_E/e_E - p_net) <0) {
+      E_past = p_E + E_past
+      p_net = p_net - p_E/e_E
     }
   }
   E = E_past

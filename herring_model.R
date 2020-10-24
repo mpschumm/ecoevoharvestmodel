@@ -1,4 +1,5 @@
 # Huss et al. 2012 herring model
+# http://esapubs.org/archive///////ecol/E093/075/appendix-A.htm
 
 # key "parameteriz"
 
