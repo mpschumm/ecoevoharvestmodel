@@ -60,7 +60,7 @@ r = 6
 # The length at which the increasing function of lambda reaches its inflection point
 l_bar = 0.2
 # Scaling parameter for obtaining structural mass from standard length
-c_1 = 5787
+c_1 = 5735
 # Multiplier for obtaining overall yearly energy intake as a function of structural mass
 p_0 = 0.1*timescale
 # Exponent for obtaining overall yearly energy intake as a function of structural mass
@@ -70,9 +70,9 @@ lambda_max = 1.3
 # Minimum ratio lambda a fish can attain over its life
 lambda_min = 0
 # Multiplier for obtaining cost of maintenance of structural mass
-c_S = 0.003*timescale
+c_S = 0.03*timescale
 # Multiplier for obtaining cost of maintenance of reversible mass
-c_E = 0.0003*timescale
+c_E = 0.03*timescale
 # Efficiency with which energy is converted into reversible mass
 e_E = 0.9
 # Efficiency with which energy is converted to structural mass
@@ -113,12 +113,27 @@ K_RD = 1000000
 sd_RD = 0
 # How much energy intake is affected by changes in resources (1=no change)
 resource = 1
+# Additional herring parameters
+# Attack rate
+AR_1=0.2
+AR_2=0.4
+AR_3=150
+AR_4=0.5
+# Digestion
+H_1=4.8
+H_2=-0.74
+# Food conversion efficiency
+K_e=0.5
+# Optimal size for consuming part of resource
+M_opt= 50
+# Exponent for maintenance
+c_SE_exp = 0.8
 
 # GROWTH FUNCTIONS
 
 # For obtaining structural mass
 structural_mass <- function(l) {
-  return(c_1*(l)^3)
+  return(c_1*(l)^3.125)
 }
 
 # Calculate the instrinsic length-dependent E/S ratio that the fish is trying to attain
@@ -128,12 +143,17 @@ intrinsic_lambda <- function(l, l_bar, r, lambda_min, lambda_max) {
 
 # Energy intake for the fish per year, dependent on fish structural biomass
 size_dependent_energy_intake <- function(S, p_0, p_1) {
-  return(resource*p_0*(S)^(p_1))
+  # Numeric values from Ecological Archives E093-075-A1
+  # Attack rate
+  AR = AR_1*((1.7*S)^AR_2) + AR_3*((S/M_opt)*exp(1-(S/M_opt)))^(AR_4)
+  # Digestion
+  H = H_1*((1.7*S)^(H_2))
+  return( timescale*((AR*resource)/(AR*resource*H+1))*K_e )
 }
 
 # Calculate the cost of the year of maintaining current structural and reversible biomass
 maintenance_cost <- function(S, E, c_S, c_E) {
-  return(c_S*S + c_E*E)
+  return(c_S*(S+E)^(c_SE_exp))
 }
 
 # Function for calculating a new, reduced level of reversible biomass, if net energy intake is negative
@@ -178,7 +198,7 @@ get_pre_reproductive_size <- function(E_past, l_past, a) {
     E = E_past + remaining_energy_allocation(e_S, e_E, lambda_a)*e_E*p_net
     S = S_past + (1-remaining_energy_allocation(e_S, e_E, lambda_a))*e_S*p_net
   }
-  l = (S/c_1)^(1/3)
+  l = (S/c_1)^(1/3.125)
   output <- c(E,l)
   return(output)
 }
