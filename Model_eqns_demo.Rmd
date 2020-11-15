@@ -705,13 +705,14 @@ legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3, col
 total_r_nh <- vector(mode="numeric")
 g_1_r_nh <- vector(mode="numeric")
 g_2_r_nh <- vector(mode="numeric")
+selection_r_nh <- vector(mode="numeric")
 
 for (rrun_counter in 1:10) {
 
 # Need to take this loop out, integrate into rest of code
 random_resources <- vector(mode="numeric", length=runtime)
 for (r in 1:runtime) {
-  random_resources[r] <- max(rnorm(1,1,sd=1),0)
+  random_resources[r] <- max(rnorm(1,1,sd=0.8),0)
 }
 
 # Run the model
@@ -794,6 +795,24 @@ for (j in 2:genotypes) {
 }
 legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
 
+# Get mean parent genotypes
+mean_parent_genotypes <- vector(mode="numeric", length=runtime)
+for (i in 1:runtime) {
+  mean_parent_genotypes[i] <- (age_dist_1[1,i]*genotype1l_bar + age_dist_2[1,i]*genotype2l_bar)/(age_dist_1[1,i] + age_dist_2[1,i])
+}
+mean_parent_genotypes<-mean_parent_genotypes[seq(368,length(mean_parent_genotypes)-4, by=4)]
+
+# Get mean genotypes of offspring
+mean_offspring_genotypes <- vector(mode="numeric", length=runtime)
+for (i in 1:runtime) {
+  mean_offspring_genotypes[i] <- (age_dist_1[1,i]*genotype1l_bar + age_dist_2[1,i]*genotype2l_bar)/(age_dist_1[1,i] + age_dist_2[1,i])
+}
+mean_offspring_genotypes <- mean_offspring_genotypes[seq(372,length(mean_offspring_genotypes), by=4)]
+
+# selection_r_nh <- c(selection_r_nh, (mean_offspring_genotypes-mean_parent_genotypes))
+
+selection_r_nh <- c(selection_r_nh, (mean_offspring_genotypes))
+
 }
 
 plot((round(add_genotypes/timescale)):runtime, random_resources[(round(add_genotypes/timescale)):runtime], col="green", main="Variation in resources over time", xlab="Time", ylab="Total amt. resource in enironment", type="l")
@@ -805,13 +824,14 @@ plot((round(add_genotypes/timescale)):runtime, random_resources[(round(add_genot
 total_r_h <- vector(mode="numeric")
 g_1_r_h <- vector(mode="numeric")
 g_2_r_h <- vector(mode="numeric")
+selection_r_h <- vector(mode="numeric")
 
 for (rrun_counter in 1:10) {
 
 # Need to take this loop out, integrate into rest of code
 random_resources <- vector(mode="numeric", length=runtime)
 for (r in 1:runtime) {
-  random_resources[r] <- max(rnorm(1,1,sd=1),0)
+  random_resources[r] <- max(rnorm(1,1,sd=0.8),0)
 }
 
 # Run the model
@@ -894,6 +914,21 @@ for (j in 2:genotypes) {
 }
 legend("topright",legend=c("all", "large maturer","small maturer"), lty=1:3)
 
+# Get mean parent genotypes
+mean_parent_genotypes <- vector(mode="numeric", length=runtime)
+for (i in 1:runtime) {
+  mean_parent_genotypes[i] <- (age_dist_1[1,i]*genotype1l_bar + age_dist_2[1,i]*genotype2l_bar)/(age_dist_1[1,i] + age_dist_2[1,i]) 
+}
+mean_parent_genotypes<-mean_parent_genotypes[seq(368,length(mean_parent_genotypes)-4, by=4)]
+
+# Get mean genotypes of offspring
+mean_offspring_genotypes <- vector(mode="numeric", length=runtime)
+for (i in 1:runtime) {
+  mean_offspring_genotypes[i] <- (age_dist_1[1,i]*genotype1l_bar + age_dist_2[1,i]*genotype2l_bar)/(age_dist_1[1,i] + age_dist_2[1,i])
+}
+mean_offspring_genotypes <- mean_offspring_genotypes[seq(372,length(mean_offspring_genotypes), by=4)]
+
+selection_r_h <- c(selection_r_h, (mean_offspring_genotypes-mean_parent_genotypes))
 
 }
 
