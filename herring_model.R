@@ -253,8 +253,8 @@ recruitment <- function(age, ages, t) {
   }
   if (age==0) {
     N_0 = alpha * egg_production_total * exp(-b*egg_production_total)
-    # Converting from thousands recruits to recruits, dividing by 2 because Ricker makes both male and female fish
-    N_0 = N_0 * 1000
+    # Converting from millions recruits to recruits, dividing by 2 because Ricker makes both male and female fish
+    N_0 = N_0 * 1000000
     N_0 = N_0/2
   }
   for (g in 1:genotypes) {
