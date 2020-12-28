@@ -56,6 +56,7 @@ lines(p_g_2_r_nh_lower, type="l", lty=3, lwd=0.3, col="red")
 plot(p_total_r_h, ylab="Abundance",xlab="Time (units of 3 month intervals)", ylim=c(0,max(p_total_r_h_upper)), main= "Harvesting, variable resource", type="l", lty=1)
 lines(p_total_r_h_upper, type="l", lty=1, lwd=0.3)
 lines(p_total_r_h_lower, type="l", lty=1, lwd=0.3)
+
 lines(p_g_1_r_h, type="l", lty=2, col="blue")
 lines(p_g_1_r_h_upper, type="l", lty=2, lwd=0.3, col="blue")
 lines(p_g_1_r_h_lower, type="l", lty=2, lwd=0.3, col="blue")
