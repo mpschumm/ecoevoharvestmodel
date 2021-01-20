@@ -1,7 +1,10 @@
+# Dependent packages
 library(pbapply)
 library(truncnorm)
 
 ### COD MODEL
+
+# run files containing functions for growth, reproduction and mortality processes
 
 source("mortality_functions.R")
 
@@ -19,13 +22,13 @@ timescale= (365)/4
 # Setting run time and longevity to units of time steps
 runtime = round(runtime_days/timescale)
 longevity = round(longevity_days/timescale)
-# Whether 
+# Whether fish breeds once a year (has a breeding season), or breeds continously throughout the year except for some period of time
+breeding_season = TRUE
 # How long to run model for convergence before addition of genetic diversity
 # in units of days
 add_genotypes = 33440
 
 # Set parameters
-# Need to add density dependence
 # The steepness of the increase in the ratio lambda (reversible over structural mass)
 r = 6
 # The length at which the increasing function of lambda reaches its inflection point
@@ -88,13 +91,17 @@ resource = 1
 
 # Initializing the matrices for the first time point
 timepoints <- vector(mode = "list", length = runtime)
+# Each timepoint consists of a matrix known as E of reversible masses, organized in rows for ages and columns for genotypes; a matrix of the same organization, l, for lengths; a matrix of the same organization for numbers of individuals, mu_exp (for "expressed"); and an array where each z-level is a genotype and the cells contain the proportion of each age-phenotype combo that has that genotype
 timepoint1 <- list(matrix(data=0, nrow=longevity, ncol=genotypes), 
                    matrix(data=0, nrow=longevity, ncol=genotypes),
                    matrix(data=0, nrow=longevity, ncol=genotypes),
                    array(data=0, dim=c(longevity, genotypes, genotypes)))
+# YOY individuals sizes and lengths - the model begins with a set number of YOY individuals
 timepoint1[[1]][1,] <- 3.938
 timepoint1[[2]][1,] <- 0.1102
+# Setting initial number of individuals
 timepoint1[[3]][1,] <- 100
+# Genotypes initially correspond perfectly to phenotypes
 timepoint1[[4]][1,,] <- diag(genotypes)
 timepoints[[1]] <- timepoint1
 
@@ -133,10 +140,11 @@ model_run <-function(list, x) {
       new_E_l[[1]][1,] <- 3.938
       new_E_l[[2]][1,] <- 0.1102
     }
-    # Updating mu matrix
+    # Create vectors with length=number of new individuals, where each value is the individual's expressed phenotype (for "expressed") and their genotype (for "genotype")
     expressed <- as.vector(inheritance_object[[2]])
     genotype <- as.vector(inheritance_object[[3]])
     mu <- inheritance_object[[1]]
+    # Filling in the genotypes of the new recruits
     new_cohort_genotypes<-mapply(function(k) scroll_through_phenotypes(k, expressed, genotype), seq(1, genotypes))
     mu[1,,] <- new_cohort_genotypes
   }
