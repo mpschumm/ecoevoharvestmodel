@@ -1,67 +1,63 @@
 # REPRODUCTION FUNCTIONS
 
-# Calculate spawning stock biomass
-fecundity <- function(ages, t, age_dist, g) {
-  # Parameterizing genotypes
-  if (t >= round(add_genotypes/timescale)) {
-    w=0.674
-    # Genotype parameterization
-    if (g==1) {
-      w=genotype1w
-    }
-    if (g==2) {
-      w=genotype2w
-    }
-  }
-  fecundity = 0
-  for (a in ages) {
-    if ((w*age_dist[a+(longevity),t]-(r_0*structural_mass(age_dist[a+(2*longevity),t]))^(r_1))>0) {
-      fecundity = fecundity + (w*age_dist[a+(longevity),t]-(r_0*structural_mass(age_dist[a+(2*longevity),t]))^(r_1))*age_dist[a,t]
-      age_dist[a+(longevity),t] = age_dist[a+(longevity),t] - w*age_dist[a+(longevity),t]
-    }
-  }
+fecundity <- function(E, l, mu_exp) {
+  # Calculate potential reproductive contribution in terms of biomass, with cost to reproduce substracted
+  repro_biomass<-((w*E-(r_0*structural_mass(l))^(r_1)))*mu_exp
+  repro_biomass_individual<-((w*E-(r_0*structural_mass(l))^(r_1)))
+  # Zero out negative reproductive biomass - these individuals don't spawn
+  repro_biomass[repro_biomass < 0] <- 0 
+  repro_biomass_individual[repro_biomass_individual < 0] <- 0 
+  E <- E - repro_biomass_individual
+  total_fecundity <- sum(repro_biomass)
   # Convert from g. to kg.
-  fecundity = fecundity/1000
+  total_fecundity = total_fecundity/1000
   # Convert from kg. to fecundity
-  fecundity = fecundity*(packing)
-  assign(paste("age_dist_",g,sep=""),age_dist, envir = .GlobalEnv) 
-  return(fecundity)
+  total_fecundity = total_fecundity*(packing)
+  return(list(total_fecundity, repro_biomass, E))
 }
 
-# Calculate total population biomass
-biomass_t <- function(ages, t) {
-  for (a in ages) {
-    b_t = b_t + age_dist[a, t-1]*(structural_mass(age_dist[a+(2*longevity),t-1]))
-  }
-  return(b_t)
+biomass_t <- function(E, l, mu_exp) {
+  masses <- E + structural_mass(l)
+  biomass <- sum(mu_exp*masses)
+  return(biomass)
 }
 
-# Density dependent recruitment for this year
-recruitment <- function(age, ages, t) {
-  egg_production_total = 0
-  for (g in 1:genotypes) {
-    egg_production_total = egg_production_total + fecundity(ages, t, get(paste("age_dist_",g,sep="")),g)
-  }
-  relative_recruitment = vector(mode="numeric", length=genotypes)
-  for (g in 1:genotypes) {
-    relative_recruitment[g] = fecundity(ages, t, get(paste("age_dist_",g,sep="")),g)/egg_production_total
-  }
-  if (age==0) {
-    N_0 = alpha * egg_production_total * exp(-b*egg_production_total)
-    # Converting from thousands recruits to recruits, dividing by 2 because Ricker makes both male and female fish
-    N_0 = N_0 * 1000
-    N_0 = N_0/2
-  }
-  for (g in 1:genotypes) {
-    age_dist = get(paste("age_dist_",g,sep=""))
-    age_dist[1,t] = N_0*relative_recruitment[g]
-    assign(paste("age_dist_",g,sep=""),age_dist, envir = .GlobalEnv) 
-  }
+Ricker <- function(egg_production_total) {
+  # Ricker for YOY
+  N_0 = alpha * egg_production_total * exp(-b*egg_production_total)
+  # Converting from thousands recruits to recruits, dividing by 2 because Ricker makes both male and female fish
+  N_0 = N_0 * 1000
+  N_0 = N_0/2
+  return(N_0)
 }
 
-# Add new recruits, and change the reproducing cohorts' amount of reversible mass
-reproduce <- function(ages, t) {
-  if (t>1) {
-    recruitment(0, ages, t)
+inheritance <- function(repro_biomass_cohorts, mu, mu_exp, N_0) {
+  multiplier<-array(c(rep(repro_biomass_cohorts,ncol(repro_biomass_cohorts))), dim=c(dim(repro_biomass_cohorts),ncol(repro_biomass_cohorts)))
+  genotype_contributions <- mu*multiplier
+  genotype_contributions_vec <- apply(genotype_contributions, 3, sum)
+  genotype_contributions_vec <- genotype_contributions_vec/sum(genotype_contributions_vec)
+  genotype_contributions_vec[is.na(genotype_contributions_vec)] <- 0
+  genotype_contributions_vec <- genotype_contributions_vec*N_0
+  # Could add sexual reproduction here
+  genotype_contributions_vec <- round(genotype_contributions_vec/10)
+  expression_list <- mapply(function(z,y) round_special(rtruncnorm(y,1,ncol(repro_biomass_cohorts),mean=z,sd=1)), seq(1, ncol(repro_biomass_cohorts)), genotype_contributions_vec)
+  genotype_list <- mapply(function(z,y) rep(z,y), seq(1, ncol(repro_biomass_cohorts)), genotype_contributions_vec)
+  expression_vec <- tabulate(as.vector(expression_list))*10
+  mu_exp[1,] <- expression_vec
+  return(list(mu, expression_list, genotype_list, mu_exp))
+}
+
+scroll_through_phenotypes <- function(k, expressed, genotype) {
+  row<-mapply(function(y) length(expressed[which(expressed==y & genotype==k)])/length(expressed[which(expressed==y)]), seq(1,genotypes))
+  row[is.na(row)] <- 0
+  return(row)
+}
+
+round_special <- function(value) {
+  if (is.null(value)) {
+    return(0)
+  }
+  if (!(is.null(value))) {
+    return(round(value))
   }
 }

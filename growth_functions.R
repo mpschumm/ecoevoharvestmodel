@@ -2,10 +2,10 @@
 
 # For obtaining structural mass
 structural_mass <- function(l) {
-  return(c_1*(l)^3)
+  return(c_1*(l)^c_2)
 }
 
-# Calculate the instrinsic length-dependent E/S ratio that the fish is trying to attain
+# Calculate the intrinsic length-dependent E/S ratio that the fish is trying to attain
 intrinsic_lambda <- function(l, l_bar, r, lambda_min, lambda_max) {
   return(lambda_min + (lambda_max-lambda_min)*(exp(r*(l-l_bar)))/(1+exp(r*(l-l_bar))))
 }
@@ -21,48 +21,44 @@ maintenance_cost <- function(S, E, c_S, c_E) {
 }
 
 # Function for calculating a new, reduced level of reversible biomass, if net energy intake is negative
-negative_p_net <- function(E, p_net, e_E) {
-  if (p_net < 0) {
-    return(E + (p_net/e_E))}
+E_for_maintenance <- function(E, p_net, e_E) {
+  E[E < 0] <- E[E < 0] + p_net*(1/e_E)
+  return(E)
 }
 
 # Calculate the amount of energy needed to raise the R/S ratio to the length-dependent maximum
-p_E_raising_lambda <- function(lambda_a, S, E) {
-  return((lambda_a*S - E))
+p_E_raising_lambda <- function(lambda_l, S, E) {
+  return((lambda_l*S - E))
 }
 
-# Calculating proportion of any remaining energy to be converted to structural mass, to maintain R/S
-remaining_energy_allocation <- function(e_S, e_E, lambda_a) {
-  return((lambda_a*e_S)/(lambda_a*e_S + e_E))
+# Calculating proportion of any remaining energy to be converted to reversible mass, to maintain R/S
+remaining_energy_allocation_E <- function(e_S, e_E, lambda_l) {
+  return((lambda_l*e_S)/(lambda_l*e_S + e_E))
 }
 
-# Obtain R and S for a cohort prior to its reproduction (or failure to reproduce) that year
-get_pre_reproductive_size <- function(E_past, l_past, a) {
+# Same as above, but for structural mass
+remaining_energy_allocation_S <- function(e_S, e_E, lambda_l) {
+  return(1-(lambda_l*e_S)/(lambda_l*e_S + e_E))
+}
+
+get_pre_reproductive_size <- function(E_past, l_past) {
   S_past = structural_mass(l_past)
   S = S_past
-  lambda_a = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
-  p_net = size_dependent_energy_intake(S_past, p_0, p_1) - maintenance_cost(S_past, E_past, c_S, c_E)
-  if (p_net < 0) {
-    E <- max(0,negative_p_net(E_past, p_net, e_E))
-  }
-  if (p_net >= 0 & lambda_a > (E_past/S_past)) {
-    # Gives amount of grams needed to raise E/S to lambda_l - not taking efficiency into account yet
-    p_E = p_E_raising_lambda(lambda_a, S_past, E_past)
-    if ((p_E/e_E - p_net) >=0) {
-      E_past = p_net*e_E + E_past
-      p_net = 0
-    }
-    if ((p_E/e_E - p_net) <0) {
-      E_past = p_E + E_past
-      p_net = p_net - p_E/e_E
-    }
-  }
   E = E_past
-  if (p_net >= 0) {
-    E = E_past + remaining_energy_allocation(e_S, e_E, lambda_a)*e_E*p_net
-    S = S_past + (1-remaining_energy_allocation(e_S, e_E, lambda_a))*e_S*p_net
-  }
-  l = (S/c_1)^(1/3)
-  output <- c(E,l)
+  lambda_l = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
+  p_net = size_dependent_energy_intake(S_past, p_0, p_1) - maintenance_cost(S_past, E_past, c_S, c_E)
+  E = E_for_maintenance(E, p_net, e_E)
+  p_net[p_net < 0] <- 0
+  p_E <- p_E_raising_lambda(lambda_l, S, E)
+  surplus <- (p_E*(1/e_E)) - p_net
+  surplus <- surplus*(-1)
+  E[surplus <= 0] <- p_net[surplus <= 0]*e_E + E[surplus <= 0]
+  p_net[surplus <= 0] <- 0
+  E[surplus > 0] <- p_E[surplus > 0] + E[surplus > 0]
+  p_net[surplus > 0] <- p_net[surplus > 0] - p_E[surplus > 0]*(1/e_E)
+  E[surplus > 0] = E[surplus > 0] + e_E*p_net[surplus > 0]*remaining_energy_allocation_E(e_S, e_E, lambda_l)[surplus > 0]
+  S[surplus > 0] = S[surplus > 0] + e_S*p_net[surplus > 0]*remaining_energy_allocation_S(e_S, e_E, lambda_l)[surplus > 0]
+  l = (S*(1/c_1))^(1/3)
+  output <- list(E,l)
   return(output)
 }
