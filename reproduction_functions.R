@@ -32,17 +32,35 @@ Ricker <- function(egg_production_total) {
 }
 
 inheritance <- function(repro_biomass_cohorts, mu, mu_exp, N_0) {
+  # The matrix of fecundities for each cohort-phenotype combo is expanded into an array to multiply by the proportions in the mu array (where each z-level is a genotype, and the proportions are the proportion of individuals in that cohort-pheno combo that have that genotype)
   multiplier<-array(c(rep(repro_biomass_cohorts,ncol(repro_biomass_cohorts))), dim=c(dim(repro_biomass_cohorts),ncol(repro_biomass_cohorts)))
   genotype_contributions <- mu*multiplier
+  # Produce a vector of total fecundity from each genotype
   genotype_contributions_vec <- apply(genotype_contributions, 3, sum)
+  # Convert back to proportions
   genotype_contributions_vec <- genotype_contributions_vec/sum(genotype_contributions_vec)
   genotype_contributions_vec[is.na(genotype_contributions_vec)] <- 0
+  # Multiply proportions by total individual offspring (or, half the number of total genotype copies being passed down)
   genotype_contributions_vec <- genotype_contributions_vec*N_0
-  # Could add sexual reproduction here
-  genotype_contributions_vec <- round(genotype_contributions_vec/10)
-  expression_list <- mapply(function(z,y) round_special(rtruncnorm(y,1,ncol(repro_biomass_cohorts),mean=z,sd=1)), seq(1, ncol(repro_biomass_cohorts)), genotype_contributions_vec)
+  # Collapse into super-individuals when N_0 higher than 1000
+  divider <- 1
+  if (floor(log10(N_0)) > 2) {
+    divider <- 10^(floor(log10(N_0)) - 2)
+  }
+  genotype_contributions_vec <- round(genotype_contributions_vec/divider)
   genotype_list <- mapply(function(z,y) rep(z,y), seq(1, ncol(repro_biomass_cohorts)), genotype_contributions_vec)
-  expression_vec <- tabulate(as.vector(expression_list))*10
+  genotype_list <- as.vector(unlist(genotype_list))
+  SR_vector <- sample(genotype_list, length(genotype_list), replace=F)
+  # Each genotype is paired with another, and averages are calculate to produce the offspring genotypes
+  # Produce sequence of numbers corresponding to the genotypes of each of the super individuals
+  genotype_list <- round((genotype_list + SR_vector)/2)
+  # Frequency distribution of genotypes
+  genotype_contributions_vec <- tabulate(genotype_list, nbins=genotypes)
+  # Produce sequence of numbers corresponding to the phenotypes of each of the super individuals
+  expression_list <- mapply(function(z,y) round_special(rtruncnorm(y,1,ncol(repro_biomass_cohorts),mean=z,sd=1)), seq(1, ncol(repro_biomass_cohorts)), genotype_contributions_vec)
+  expression_list <- as.vector(unlist(expression_list))
+  expression_list <- expression_list[which(expression_list>0)]
+  expression_vec <- tabulate(expression_list, nbins=genotypes)*divider
   mu_exp[1,] <- expression_vec
   return(list(mu, expression_list, genotype_list, mu_exp))
 }
@@ -61,3 +79,4 @@ round_special <- function(value) {
     return(round(value))
   }
 }
+

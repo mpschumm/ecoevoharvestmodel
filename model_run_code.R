@@ -15,7 +15,7 @@ source("growth_functions.R")
 # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
 longevity_days = 9125
 # set runtime to any arbitrary desired value, in units of days, that is a multiple of 365
-runtime_days = 5*91.25 # 150*365
+runtime_days = 100*91.25 # 150*365
 genotypes = 20
 # Setting the length of the timestep in days - set to any fraction of 365
 timescale= (365)/4
@@ -106,7 +106,7 @@ timepoint1[[4]][1,,] <- diag(genotypes)
 timepoints[[1]] <- timepoint1
 
 # Iterate through time steps
-mapply( function(x) {
+pbmapply( function(x) {
   timepoints[[x]] <<- model_run(timepoints[[x-1]], x)
 }, 2:runtime)
 
@@ -141,9 +141,12 @@ model_run <-function(list, x) {
       new_E_l[[2]][1,] <- 0.1102
     }
     # Create vectors with length=number of new individuals, where each value is the individual's expressed phenotype (for "expressed") and their genotype (for "genotype")
-    expressed <- as.vector(inheritance_object[[2]])
-    genotype <- as.vector(inheritance_object[[3]])
     mu <- inheritance_object[[1]]
+    expressed <- inheritance_object[[2]]
+    genotype <- inheritance_object[[3]]
+    if (length(expressed)!=length(genotype)) {
+      print("bad")
+    }
     # Filling in the genotypes of the new recruits
     new_cohort_genotypes<-mapply(function(k) scroll_through_phenotypes(k, expressed, genotype), seq(1, genotypes))
     mu[1,,] <- new_cohort_genotypes
