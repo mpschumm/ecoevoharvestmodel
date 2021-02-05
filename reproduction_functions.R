@@ -53,11 +53,11 @@ inheritance <- function(repro_biomass_cohorts, mu, mu_exp, N_0) {
   SR_vector <- sample(genotype_list, length(genotype_list), replace=F)
   # Each genotype is paired with another, and averages are calculate to produce the offspring genotypes
   # Produce sequence of numbers corresponding to the genotypes of each of the super individuals
-  genotype_list <- round((genotype_list + SR_vector)/2)
+  genotype_list_avg <- round((genotype_list + SR_vector)/2)
   # Frequency distribution of genotypes
-  genotype_contributions_vec <- tabulate(genotype_list, nbins=genotypes)
+  genotype_contributions_vec_avg <- tabulate(genotype_list, nbins=genotypes)
   # Produce sequence of numbers corresponding to the phenotypes of each of the super individuals
-  expression_list <- mapply(function(z,y) round_special(rtruncnorm(y,1,ncol(repro_biomass_cohorts),mean=z,sd=1)), seq(1, ncol(repro_biomass_cohorts)), genotype_contributions_vec)
+  expression_list <- mapply(function(z,y) round_special(rtruncnorm(y,1,ncol(repro_biomass_cohorts),mean=z,sd=1)), seq(1, ncol(repro_biomass_cohorts)), genotype_contributions_vec_avg)
   expression_list <- as.vector(unlist(expression_list))
   expression_list <- expression_list[which(expression_list>0)]
   expression_vec <- tabulate(expression_list, nbins=genotypes)*divider

@@ -15,7 +15,7 @@ source("growth_functions.R")
 # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
 longevity_days = 9125
 # set runtime to any arbitrary desired value, in units of days, that is a multiple of 365
-runtime_days = 100*91.25 # 150*365
+runtime_days = 400*91.25 # 150*365
 genotypes = 20
 # Setting the length of the timestep in days - set to any fraction of 365
 timescale= (365)/4
@@ -37,7 +37,7 @@ l_bar = 0.2
 c_1 = 5787
 c_2 = 3
 # Multiplier for obtaining overall yearly energy intake as a function of structural mass
-p_0 = 0.1*timescale
+p_0 = 0.1 # *timescale
 # Exponent for obtaining overall yearly energy intake as a function of structural mass
 p_1 = 2/3
 # Maximum ratio lambda (reversible over structural mass) a fish can attain over its life
@@ -45,9 +45,9 @@ lambda_max = 1.3
 # Minimum ratio lambda a fish can attain over its life
 lambda_min = 0
 # Multiplier for obtaining cost of maintenance of structural mass
-c_S = 0.003*timescale
+c_S = 0.003 # *timescale
 # Multiplier for obtaining cost of maintenance of reversible mass
-c_E = 0.0003*timescale
+c_E = 0.0003 # *timescale
 # Efficiency with which energy is converted into reversible mass
 e_E = 0.9
 # Efficiency with which energy is converted to structural mass
@@ -58,7 +58,7 @@ r_1 = 0.6
 # Effectively, reproductive investment (fraction of reversible mass devoted to reproduction)
 w= 0.674
 # Instantaneous base mortality rate, derived from daily instantaneous probability of survival for M=-0.2, multiplied to -1 to make positive
-m = log(0.999452^timescale)*(-1)
+m = log(0.999452)*(-1)
 # Instantaneous fishing mortality
 Fishing = 0
 # Ricker
@@ -72,8 +72,8 @@ mincatchsize = 0.5
 b_t=0
 # Increased natural mortality rate at E/S = 0 or S = 0 
 # For roughly 0.5 year-based instantaneous mortality at ~1 yrs., Koster et al 2003
-m_p_max=log(0.9986^timescale)*(-1)
-m_c_max=log(0.95^timescale)*(-1)
+m_p_max=log(0.9986)*(-1)
+m_c_max=log(0.95)*(-1)
 # Egg packing constant
 packing = 4.45e6
 # Parameter for exponential decline in condition-dependent mortality with improved body condition
@@ -112,10 +112,14 @@ pbmapply( function(x) {
 
 # Function for an iteration of the model
 model_run <-function(list, x) {
-  # New E and l values for each cohort-genotype combo
-  new_E_l <- get_pre_reproductive_size(list[[1]], list[[2]])
-  # New population sizes for each cohort-genotype combo, after mortality in prior to breeding
-  new_mu_exp <- mortality(list[[3]], new_E_l[[1]], new_E_l[[2]])
+  new_E_l <<- list(list[[1]], list[[2]])
+  new_mu_exp <<- list[[3]]
+  mapply ( function(growing) {
+    # New E and l values for each cohort-genotype combo
+    new_E_l <<- get_pre_reproductive_size(new_E_l[[1]], new_E_l[[2]])
+    # New population sizes for each cohort-genotype combo, after mortality in prior to breeding
+    new_mu_exp <<- mortality(new_mu_exp, new_E_l[[1]], new_E_l[[2]])
+  }, 1:round(timescale))
   # Add oldest and second-oldest cohorts
   new_mu_exp[nrow(new_mu_exp)-1,] <- new_mu_exp[nrow(new_mu_exp),] + new_mu_exp[nrow(new_mu_exp)-1,]
   # Empty out first row for young of year, for the mu_exp, E and l matrices
