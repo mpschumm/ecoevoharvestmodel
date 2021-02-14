@@ -61,6 +61,8 @@ r = 6
 l_bar = 0.2
 # Scaling parameter for obtaining structural mass from standard length
 c_1 = 5735
+# Where is c2?
+# Make an alternate of each of the 4 function files for herring
 # Multiplier for obtaining overall yearly energy intake as a function of structural mass
 p_0 = 0.1*timescale
 # Exponent for obtaining overall yearly energy intake as a function of structural mass
@@ -73,6 +75,7 @@ lambda_min = 0
 c_S = 0.03*timescale
 # Multiplier for obtaining cost of maintenance of reversible mass
 c_E = 0.03*timescale
+# Is maintenance really done?
 # Efficiency with which energy is converted into reversible mass
 e_E = 0.9
 # Efficiency with which energy is converted to structural mass

@@ -9,6 +9,6 @@ selective_mortality <- function(length) {
 mortality <- function(mu_exp, E, l) {
   lambda <- (E)/structural_mass(l)
   lambda[is.na(lambda)] <- 0
-  mu_exp <- mu_exp*exp( -m + Fishing*selective_mortality(l) - m_c_max*exp(-z_c*lambda) - (m_p_max-m)*exp(-z_p*l))
+  mu_exp <- mu_exp*exp( -m - Fishing*selective_mortality(l) - m_c_max*exp(-z_c*lambda) - (m_p_max-m)*exp(-z_p*l))
   return(mu_exp)
 }

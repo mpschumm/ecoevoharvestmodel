@@ -12,7 +12,7 @@ intrinsic_lambda <- function(l, l_bar, r, lambda_min, lambda_max) {
 
 # Energy intake for the fish per year, dependent on fish structural biomass
 size_dependent_energy_intake <- function(S, p_0, p_1) {
-  return(resource*p_0*(S)^(p_1))
+  return(p_0*(S)^(p_1))
 }
 
 # Calculate the cost of the year of maintaining current structural and reversible biomass
@@ -41,12 +41,13 @@ remaining_energy_allocation_S <- function(e_S, e_E, lambda_l) {
   return(1-(lambda_l*e_S)/(lambda_l*e_S + e_E))
 }
 
-get_pre_reproductive_size <- function(E_past, l_past) {
+get_pre_reproductive_size <- function(E_past, l_past, resource) {
   S_past = structural_mass(l_past)
   S = S_past
   E = E_past
   lambda_l = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
-  p_net = size_dependent_energy_intake(S_past, p_0, p_1) - maintenance_cost(S_past, E_past, c_S, c_E)
+  consumed_resource <- sum(size_dependent_energy_intake(S_past, p_0, p_1)*(resource/(K_half+resource)))
+  p_net = size_dependent_energy_intake(S_past, p_0, p_1)*(resource/(K_half+resource)) - maintenance_cost(S_past, E_past, c_S, c_E)
   E = E_for_maintenance(E, p_net, e_E)
   p_net[p_net < 0] <- 0
   p_E <- p_E_raising_lambda(lambda_l, S, E)
@@ -59,6 +60,6 @@ get_pre_reproductive_size <- function(E_past, l_past) {
   E[surplus > 0] = E[surplus > 0] + e_E*p_net[surplus > 0]*remaining_energy_allocation_E(e_S, e_E, lambda_l)[surplus > 0]
   S[surplus > 0] = S[surplus > 0] + e_S*p_net[surplus > 0]*remaining_energy_allocation_S(e_S, e_E, lambda_l)[surplus > 0]
   l = (S*(1/c_1))^(1/3)
-  output <- list(E,l)
+  output <- list(E,l,consumed_resource)
   return(output)
 }

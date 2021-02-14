@@ -15,7 +15,7 @@ source("growth_functions.R")
 # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
 longevity_days = 9125
 # set runtime to any arbitrary desired value, in units of days, that is a multiple of 365
-runtime_days = 400*91.25 # 150*365
+runtime_days =  400*91.25 # 150*365 # 20*365
 genotypes = 20
 # Setting the length of the timestep in days - set to any fraction of 365
 timescale= (365)/4
@@ -26,7 +26,7 @@ longevity = round(longevity_days/timescale)
 breeding_season = TRUE
 # How long to run model for convergence before addition of genetic diversity
 # in units of days
-add_genotypes = 33440
+add_genotypes = 33000
 
 # Set parameters
 # The steepness of the increase in the ratio lambda (reversible over structural mass)
@@ -60,7 +60,7 @@ w= 0.674
 # Instantaneous base mortality rate, derived from daily instantaneous probability of survival for M=-0.2, multiplied to -1 to make positive
 m = log(0.999452)*(-1)
 # Instantaneous fishing mortality
-Fishing = 0
+Fishing = 0 # log(0.9986015)*(-1) # for 0.4
 # Ricker
 alpha = 8.44e-09
 b = 4.43e-15
@@ -80,14 +80,16 @@ packing = 4.45e6
 z_c=7
 # Parameter for exponential decline in predation mortality with increased body length
 z_p=8
-# Resource density
-RD = 9000000
-# Consumption with resource density half-saturation constant
-K_RD = 1000000
-# Variability in resource
-sd_RD = 0
-# How much energy intake is affected by changes in resources (1=no change)
-resource = 1
+# Amount of resource (initial)
+resource <- 1e+6
+# Resource carrying capacity
+resource_K <- 1e+6
+# Resource intrinsic growth rate
+resource_r <- 2.4
+# Resource variability
+r_SD = 10
+# Consumer functional response half-saturation constant
+K_half <- 1e+4
 
 # Initializing the matrices for the first time point
 timepoints <- vector(mode = "list", length = runtime)
@@ -104,6 +106,10 @@ timepoint1[[3]][1,] <- 100
 # Genotypes initially correspond perfectly to phenotypes
 timepoint1[[4]][1,,] <- diag(genotypes)
 timepoints[[1]] <- timepoint1
+# Initialize resources vector
+resources <- vector(mode="numeric", length=runtime)
+# Initialize resource consumption vector
+resource_consumption <- vector(mode="numeric", length=runtime)
 
 # Iterate through time steps
 pbmapply( function(x) {
@@ -112,14 +118,26 @@ pbmapply( function(x) {
 
 # Function for an iteration of the model
 model_run <-function(list, x) {
+  # Adding differences between genotypes
+  if (x==round(add_genotypes/timescale)) {
+    l_bar <<- seq(0.1, 0.3, by = 0.2/(genotypes-1))
+    l_bar<<-matrix(rep(l_bar,each=longevity),nrow=longevity)
+  }
   new_E_l <<- list(list[[1]], list[[2]])
   new_mu_exp <<- list[[3]]
   mapply ( function(growing) {
     # New E and l values for each cohort-genotype combo
-    new_E_l <<- get_pre_reproductive_size(new_E_l[[1]], new_E_l[[2]])
+    new_E_l <<- get_pre_reproductive_size(new_E_l[[1]], new_E_l[[2]], resource)
+    # Compute a random value for calculating r
+    random_value <- rnorm(1,mean=0, sd=r_SD)
+    resource <<- resource + resource*((resource_K-resource)/resource_K)*resource_r*(exp(random_value)/(1+exp(random_value))) - new_E_l[[3]]
     # New population sizes for each cohort-genotype combo, after mortality in prior to breeding
     new_mu_exp <<- mortality(new_mu_exp, new_E_l[[1]], new_E_l[[2]])
   }, 1:round(timescale))
+  # Record resource level
+  resources[x] <<- resource
+  # Record consumption level
+  resource_consumption[x] <<- new_E_l[[3]]
   # Add oldest and second-oldest cohorts
   new_mu_exp[nrow(new_mu_exp)-1,] <- new_mu_exp[nrow(new_mu_exp),] + new_mu_exp[nrow(new_mu_exp)-1,]
   # Empty out first row for young of year, for the mu_exp, E and l matrices
