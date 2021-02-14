@@ -1,3 +1,11 @@
+results_inflection <- vector(mode="numeric",length=10)
+results_LAM <- vector(mode="numeric",length=10)
+results_AAM <- vector(mode="numeric",length=10)
+results_popn <- vector(mode = "list", length = 10)
+results_biomass <- vector(mode = "list", length = 10)
+
+for (results_counter in 1:10) {
+
 # Dependent packages
 library(pbapply)
 library(truncnorm)
@@ -26,7 +34,7 @@ longevity = round(longevity_days/timescale)
 breeding_season = TRUE
 # How long to run model for convergence before addition of genetic diversity
 # in units of days
-add_genotypes = 33000
+add_genotypes = 21900
 
 # Set parameters
 # The steepness of the increase in the ratio lambda (reversible over structural mass)
@@ -116,12 +124,38 @@ pbmapply( function(x) {
   timepoints[[x]] <<- model_run(timepoints[[x-1]], x)
 }, 2:runtime)
 
+phenotype_averages <- matrix(nrow=3, ncol=genotypes)
+
+for (tracker_counter in 1:genotypes) {
+  mature<-(w*as.vector(timepoints[[runtime]][[1]][,tracker_counter])-as.vector((r_0*(structural_mass(timepoints[[runtime]][[2]][,tracker_counter]))^(r_1))))
+  phenotype_averages[1,tracker_counter] <- which(mature==min(mature[mature>0]))
+  phenotype_averages[2,tracker_counter] <- timepoints[[runtime]][[2]][phenotype_averages[1,tracker_counter],tracker_counter]
+  phenotype_averages[3,tracker_counter] <- timepoints[[runtime]][[3]][phenotype_averages[1,tracker_counter],tracker_counter]
+}
+
+phenotype_averages[3,] <- phenotype_averages[3,]/sum(phenotype_averages[3,])
+
+results_inflection[results_counter] <- sum(c(1:genotypes)*(timepoints[[runtime]][[3]][1,]/sum(timepoints[[runtime]][[3]][1,])))
+results_AAM[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[1,])
+results_LAM[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[2,])
+
+results_popn[[results_counter]]<-mapply(function(x) sum(timepoints[[x]][[3]]), seq(40,400, by=4))
+results_biomass[[results_counter]]<-mapply(function(x) sum((timepoints[[x]][[1]] + timepoints[[x]][[2]])*timepoints[[x]][[3]] ), seq(40,400, by=4))
+
+}
+
 # Function for an iteration of the model
 model_run <-function(list, x) {
-  # Adding differences between genotypes
+  # Adding fishing after a certain time point
   if (x==round(add_genotypes/timescale)) {
-    l_bar <<- seq(0.1, 0.3, by = 0.2/(genotypes-1))
-    l_bar<<-matrix(rep(l_bar,each=longevity),nrow=longevity)
+    Fishing <<- log(0.990439)*(-1)
+  }
+  # Adding differences between genotypes
+  # if (x==round(add_genotypes/timescale)) {
+  if (x==round(add_genotypes/timescale)) {
+    # l_bar <<- seq(0.1, 0.3, by = 0.2/(genotypes-1))
+    r <<- seq(1, 11, by = 10/(genotypes-1))
+    r<<-matrix(rep(r,each=longevity),nrow=longevity)
   }
   new_E_l <<- list(list[[1]], list[[2]])
   new_mu_exp <<- list[[3]]

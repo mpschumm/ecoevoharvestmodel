@@ -2,7 +2,7 @@
 
 fecundity <- function(E, l, mu_exp) {
   # Calculate potential reproductive contribution in terms of biomass, with cost to reproduce substracted
-  repro_biomass<-((w*E-(r_0*structural_mass(l))^(r_1)))*mu_exp
+  repro_biomass<-(w*E-r_0*structural_mass(l)^(r_1))*mu_exp
   repro_biomass_individual<-((w*E-(r_0*structural_mass(l))^(r_1)))
   # Zero out negative reproductive biomass - these individuals don't spawn
   repro_biomass[repro_biomass < 0] <- 0 

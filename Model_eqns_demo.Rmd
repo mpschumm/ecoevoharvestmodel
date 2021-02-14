@@ -988,7 +988,7 @@ plot(repro_vec-repro_vec_1, ylab="Reproduction of genotype 2 - genotype 1", main
 
 plot(length_ratio$length, length_ratio$ratio, xlim=c(0,1), ylim=c(0,1.3))
 ratios <- vector(mode="numeric", length=100)
-r =6
+r =1
 # In days
 a_bar = 0.2
 lambda_min=0
