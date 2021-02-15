@@ -4,7 +4,7 @@ results_AAM <- vector(mode="numeric",length=10)
 results_popn <- vector(mode = "list", length = 10)
 results_biomass <- vector(mode = "list", length = 10)
 
-for (results_counter in 1:10) {
+for (results_counter in 1:2) {
 
 # Dependent packages
 library(pbapply)
@@ -89,15 +89,15 @@ z_c=7
 # Parameter for exponential decline in predation mortality with increased body length
 z_p=8
 # Amount of resource (initial)
-resource <- 1e+6
+resource <- 1e+11
 # Resource carrying capacity
-resource_K <- 1e+6
+resource_K <- 1e+11
 # Resource intrinsic growth rate
 resource_r <- 2.4
 # Resource variability
-r_SD = 10
+r_SD = 20
 # Consumer functional response half-saturation constant
-K_half <- 1e+4
+K_half <- 1e+9
 
 # Initializing the matrices for the first time point
 timepoints <- vector(mode = "list", length = runtime)
@@ -148,7 +148,7 @@ results_biomass[[results_counter]]<-mapply(function(x) sum((timepoints[[x]][[1]]
 model_run <-function(list, x) {
   # Adding fishing after a certain time point
   if (x==round(add_genotypes/timescale)) {
-    Fishing <<- log(0.990439)*(-1)
+    Fishing <<- 0 # log(0.990439)*(-1)
   }
   # Adding differences between genotypes
   # if (x==round(add_genotypes/timescale)) {
@@ -161,7 +161,7 @@ model_run <-function(list, x) {
   new_mu_exp <<- list[[3]]
   mapply ( function(growing) {
     # New E and l values for each cohort-genotype combo
-    new_E_l <<- get_pre_reproductive_size(new_E_l[[1]], new_E_l[[2]], resource)
+    new_E_l <<- get_pre_reproductive_size(new_E_l[[1]], new_E_l[[2]], resource, new_mu_exp)
     # Compute a random value for calculating r
     random_value <- rnorm(1,mean=0, sd=r_SD)
     resource <<- resource + resource*((resource_K-resource)/resource_K)*resource_r*(exp(random_value)/(1+exp(random_value))) - new_E_l[[3]]

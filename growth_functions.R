@@ -41,12 +41,12 @@ remaining_energy_allocation_S <- function(e_S, e_E, lambda_l) {
   return(1-(lambda_l*e_S)/(lambda_l*e_S + e_E))
 }
 
-get_pre_reproductive_size <- function(E_past, l_past, resource) {
+get_pre_reproductive_size <- function(E_past, l_past, resource, new_mu_exp) {
   S_past = structural_mass(l_past)
   S = S_past
   E = E_past
   lambda_l = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
-  consumed_resource <- sum(size_dependent_energy_intake(S_past, p_0, p_1)*(resource/(K_half+resource)))
+  consumed_resource <- sum(size_dependent_energy_intake(S_past, p_0, p_1)*new_mu_exp*(resource/(K_half+resource)))
   p_net = size_dependent_energy_intake(S_past, p_0, p_1)*(resource/(K_half+resource)) - maintenance_cost(S_past, E_past, c_S, c_E)
   E = E_for_maintenance(E, p_net, e_E)
   p_net[p_net < 0] <- 0
