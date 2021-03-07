@@ -4,7 +4,7 @@ results_AAM <- vector(mode="numeric",length=10)
 results_popn <- vector(mode = "list", length = 10)
 results_biomass <- vector(mode = "list", length = 10)
 
-for (results_counter in 1:2) {
+for (results_counter in 1:1) {
 
 # Dependent packages
 library(pbapply)
@@ -45,7 +45,7 @@ l_bar = 0.2
 c_1 = 5787
 c_2 = 3
 # Multiplier for obtaining overall yearly energy intake as a function of structural mass
-p_0 = 0.1 # *timescale
+p_0 = 0.1 
 # Exponent for obtaining overall yearly energy intake as a function of structural mass
 p_1 = 2/3
 # Maximum ratio lambda (reversible over structural mass) a fish can attain over its life
@@ -53,9 +53,9 @@ lambda_max = 1.3
 # Minimum ratio lambda a fish can attain over its life
 lambda_min = 0
 # Multiplier for obtaining cost of maintenance of structural mass
-c_S = 0.003 # *timescale
+c_S = 0.003 
 # Multiplier for obtaining cost of maintenance of reversible mass
-c_E = 0.0003 # *timescale
+c_E = 0.0003 
 # Efficiency with which energy is converted into reversible mass
 e_E = 0.9
 # Efficiency with which energy is converted to structural mass
@@ -65,10 +65,13 @@ r_0 = 6
 r_1 = 0.6
 # Effectively, reproductive investment (fraction of reversible mass devoted to reproduction)
 w= 0.674
-# Instantaneous base mortality rate, derived from daily instantaneous probability of survival for M=-0.2, multiplied to -1 to make positive
+# Log of instantaneous base mortality rate, derived from daily instantaneous probability of survival for M=-0.2, multiplied to -1 to make positive
 m = log(0.999452)*(-1)
 # Instantaneous fishing mortality
-Fishing = 0 # log(0.9986015)*(-1) # for 0.4
+Fishing = 0
+# For what fishing level to add when fishing is introduced partway through the simulation - put yearly instantaneous fishing mortality
+Fishing_add = 0.2
+Fishing_add = log((1-Fishing_add)^(1/365))*(-1)
 # Ricker
 alpha = 8.44e-09
 b = 4.43e-15
@@ -76,8 +79,6 @@ b = 4.43e-15
 q_f = 0.2
 # Minimum catch size for the species (in meters)
 mincatchsize = 0.5
-# Total population biomass
-b_t=0
 # Increased natural mortality rate at E/S = 0 or S = 0 
 # For roughly 0.5 year-based instantaneous mortality at ~1 yrs., Koster et al 2003
 m_p_max=log(0.9986)*(-1)
@@ -88,16 +89,16 @@ packing = 4.45e6
 z_c=7
 # Parameter for exponential decline in predation mortality with increased body length
 z_p=8
-# Amount of resource (initial)
-resource <- 1e+11
+# Amount of resource (initial), set to reasonable starting values by calculating fish population resource consumption
+resource <- 2e+10
 # Resource carrying capacity
-resource_K <- 1e+11
+resource_K <- 2e+10
 # Resource intrinsic growth rate
-resource_r <- 2.4
+resource_r <- 1.5
 # Resource variability
-r_SD = 20
+r_SD = 5
 # Consumer functional response half-saturation constant
-K_half <- 1e+9
+K_half <- 5e9
 
 # Initializing the matrices for the first time point
 timepoints <- vector(mode = "list", length = runtime)
@@ -135,7 +136,7 @@ for (tracker_counter in 1:genotypes) {
 
 phenotype_averages[3,] <- phenotype_averages[3,]/sum(phenotype_averages[3,])
 
-results_inflection[results_counter] <- sum(c(1:genotypes)*(timepoints[[runtime]][[3]][1,]/sum(timepoints[[runtime]][[3]][1,])))
+results_inflection[results_counter] <- sum(c(1:genotypes)*(timepoints[[runtime-(365/timescale)]][[3]][1,]/sum(timepoints[[runtime-(365/timescale)]][[3]][1,])))
 results_AAM[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[1,])
 results_LAM[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[2,])
 
@@ -148,12 +149,13 @@ results_biomass[[results_counter]]<-mapply(function(x) sum((timepoints[[x]][[1]]
 model_run <-function(list, x) {
   # Adding fishing after a certain time point
   if (x==round(add_genotypes/timescale)) {
-    Fishing <<- 0 # log(0.990439)*(-1)
+    Fishing <<- Fishing_add
   }
   # Adding differences between genotypes
   # if (x==round(add_genotypes/timescale)) {
   if (x==round(add_genotypes/timescale)) {
     # l_bar <<- seq(0.1, 0.3, by = 0.2/(genotypes-1))
+    # l_bar <<-matrix(rep(l_bar,each=longevity),nrow=longevity)
     r <<- seq(1, 11, by = 10/(genotypes-1))
     r<<-matrix(rep(r,each=longevity),nrow=longevity)
   }
@@ -171,6 +173,7 @@ model_run <-function(list, x) {
   # Record resource level
   resources[x] <<- resource
   # Record consumption level
+  # Resource consumption is only for last day within period of days in 'timescale' (i.e., last day of season if timescale = 365/4)
   resource_consumption[x] <<- new_E_l[[3]]
   # Add oldest and second-oldest cohorts
   new_mu_exp[nrow(new_mu_exp)-1,] <- new_mu_exp[nrow(new_mu_exp),] + new_mu_exp[nrow(new_mu_exp)-1,]
@@ -183,7 +186,7 @@ model_run <-function(list, x) {
   mu[2:nrow(mu),,] <- mu[1:(nrow(mu)-1),,]
   mu[1,,] <- 0
   # Reproduction is seasonal
-  if (x%%round(365/timescale) == 0) {
+  if ((breeding_season==T) & x%%round(365/timescale ) == 0 & x!=runtime) {
     # Get the amount of eggs produced and the amounts produced by each cohort-genotype combo, and a new E after reversible energy is depleted by mating
     fecundity_object <- fecundity(new_E_l[[1]], new_E_l[[2]], new_mu_exp)
     new_E_l[[1]] <- fecundity_object[[3]]
@@ -200,9 +203,7 @@ model_run <-function(list, x) {
     mu <- inheritance_object[[1]]
     expressed <- inheritance_object[[2]]
     genotype <- inheritance_object[[3]]
-    if (length(expressed)!=length(genotype)) {
-      print("bad")
-    }
+    # length(expressed) should == length(genotype)
     # Filling in the genotypes of the new recruits
     new_cohort_genotypes<-mapply(function(k) scroll_through_phenotypes(k, expressed, genotype), seq(1, genotypes))
     mu[1,,] <- new_cohort_genotypes
