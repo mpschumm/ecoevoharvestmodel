@@ -4,7 +4,7 @@ results_AAM <- vector(mode="numeric",length=10)
 results_popn <- vector(mode = "list", length = 10)
 results_biomass <- vector(mode = "list", length = 10)
 
-for (results_counter in 1:1) {
+for (results_counter in 1:2) {
 
 # Dependent packages
 library(pbapply)
@@ -23,7 +23,7 @@ source("growth_functions.R")
 # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
 longevity_days = 9125
 # set runtime to any arbitrary desired value, in units of days, that is a multiple of 365
-runtime_days =  400*91.25 # 150*365 # 20*365
+runtime_days =  100*365 # 150*365 # 20*365
 genotypes = 20
 # Setting the length of the timestep in days - set to any fraction of 365
 timescale= (365)/4
@@ -34,7 +34,7 @@ longevity = round(longevity_days/timescale)
 breeding_season = TRUE
 # How long to run model for convergence before addition of genetic diversity
 # in units of days
-add_genotypes = 21900
+add_genotypes = 0.6*runtime_days
 
 # Set parameters
 # The steepness of the increase in the ratio lambda (reversible over structural mass)
@@ -96,7 +96,7 @@ resource_K <- 2e+10
 # Resource intrinsic growth rate
 resource_r <- 1.5
 # Resource variability
-r_SD = 5
+r_SD = 0
 # Consumer functional response half-saturation constant
 K_half <- 5e9
 

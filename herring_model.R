@@ -57,8 +57,8 @@ for (results_counter in 1:10) {
   # Efficiency with which energy is converted to structural mass
   e_S = 0.5
   # Multiplier and exponent for the cost of reproduction (in grams)
-  r_0 = 6
-  r_1 = 0.6
+  r_0 = 0.7
+  r_1 = 1
   # Effectively, reproductive investment (fraction of reversible mass devoted to reproduction)
   w= 0.674
   # Instantaneous base mortality rate, derived from daily instantaneous probability of survival for M=-0.2, multiplied to -1 to make positive
