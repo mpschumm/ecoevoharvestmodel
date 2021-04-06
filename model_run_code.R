@@ -1,6 +1,8 @@
 results_inflection <- vector(mode="numeric",length=320)
 results_LAM <- vector(mode="numeric",length=320)
 results_AAM <- vector(mode="numeric",length=320)
+results_L2 <- vector(mode="numeric",length=320)
+results_Linf <- vector(mode="numeric",length=320)
 results_popn <- vector(mode = "list", length = 320)
 results_biomass <- vector(mode = "list", length = 320)
 
@@ -73,7 +75,7 @@ for (results_counter in 1:2) {
   # Instantaneous fishing mortality
   Fishing = 0
   # For what fishing level to add when fishing is introduced partway through the simulation - put yearly instantaneous fishing mortality
-  Fishing_add = 0.2
+  Fishing_add = fishing_vec[results_counter]
   Fishing_add = log((1-Fishing_add)^(1/365))*(-1)
   # Ricker
   alpha = 8.44e-09
@@ -99,7 +101,7 @@ for (results_counter in 1:2) {
   # Resource intrinsic growth rate
   resource_r <- 1.5
   # Resource variability
-  r_SD = 20
+  r_SD = randos_vec[results_counter]
   # Consumer functional response half-saturation constant
   K_half <- 1e10
   
@@ -128,13 +130,15 @@ for (results_counter in 1:2) {
     timepoints[[x]] <<- model_run(timepoints[[x-1]], x)
   }, 2:runtime)
   
-  phenotype_averages <- matrix(nrow=3, ncol=genotypes)
+  phenotype_averages <- matrix(nrow=5, ncol=genotypes)
   
   for (tracker_counter in 1:genotypes) {
     mature<-(w*as.vector(timepoints[[runtime]][[1]][,tracker_counter])-as.vector((r_0*(structural_mass(timepoints[[runtime]][[2]][,tracker_counter]))^(r_1))))
     phenotype_averages[1,tracker_counter] <- which(mature==min(mature[mature>0]))
     phenotype_averages[2,tracker_counter] <- timepoints[[runtime]][[2]][phenotype_averages[1,tracker_counter],tracker_counter]
     phenotype_averages[3,tracker_counter] <- timepoints[[runtime]][[3]][phenotype_averages[1,tracker_counter],tracker_counter]
+    phenotype_averages[4,tracker_counter] <- timepoints[[runtime]][[2]][9,tracker_counter]
+    phenotype_averages[5,tracker_counter] <- timepoints[[runtime]][[2]][97,tracker_counter]
   }
   
   phenotype_averages[3,] <- phenotype_averages[3,]/sum(phenotype_averages[3,])
@@ -142,6 +146,8 @@ for (results_counter in 1:2) {
   results_inflection[results_counter] <- sum(c(1:genotypes)*(timepoints[[runtime-(365/timescale)]][[3]][1,]/sum(timepoints[[runtime-(365/timescale)]][[3]][1,])))
   results_AAM[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[1,])
   results_LAM[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[2,])
+  results_L2[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[4,])
+  results_Linf[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[5,])
   
   results_popn[[results_counter]]<-mapply(function(x) sum(timepoints[[x]][[3]]), seq((365/timescale)*10,runtime, by=365/timescale))
   results_biomass[[results_counter]]<-mapply(function(x) sum((timepoints[[x]][[1]] + timepoints[[x]][[2]])*timepoints[[x]][[3]] ), seq(40,400, by=4))
@@ -155,20 +161,25 @@ model_run <-function(list, x) {
     Fishing <<- Fishing_add
   }
   # Adding differences between genotypes
-  # if (x==round(add_genotypes/timescale)) {
   if (x==round(add_genotypes/timescale)) {
-    # l_bar <<- rev(seq(0.1, 0.3, by = 0.2/(genotypes-1)))
-    # l_bar <<-matrix(rep(l_bar,each=longevity),nrow=longevity)
     r <<- seq(-1, 13, by = 14/(genotypes-1))
     r<<-matrix(rep(r,each=longevity),nrow=longevity)
   }
   new_E_l <<- list(list[[1]], list[[2]])
   new_mu_exp <<- list[[3]]
+  # Generate vectors of random values, with some degree of temporal correlation phi
+  times <- 1:round(timescale)
+  mat <- as.matrix(dist(times, diag = T, upper= T))
+  phi = 0.11
+  AR_mat <- as.matrix(phi^mat)
+  L <- t(chol(AR_mat))
+  ar_var <- L%*%matrix(rnorm(round(timescale)*round(timescale),0,r_SD), ncol= round(timescale))*sqrt(1-phi^2)
+  random_values <- ar_var[,1]
   mapply ( function(growing) {
     # New E and l values for each cohort-genotype combo
     new_E_l <<- get_pre_reproductive_size(new_E_l[[1]], new_E_l[[2]], resource, new_mu_exp)
     # Compute a random value for calculating r
-    random_value <- rnorm(1,mean=0, sd=r_SD)
+    random_value <- random_values[growing]
     resource <<- resource + resource*((resource_K-resource)/resource_K)*resource_r*(exp(random_value)/(1+exp(random_value))) - new_E_l[[3]]
     # New population sizes for each cohort-genotype combo, after mortality in prior to breeding
     new_mu_exp <<- mortality(new_mu_exp, new_E_l[[1]], new_E_l[[2]])
@@ -208,6 +219,8 @@ model_run <-function(list, x) {
     genotype <- inheritance_object[[3]]
     # length(expressed) should == length(genotype)
     # Filling in the genotypes of the new recruits
+    # The scroll_through_genotypes function will create a row for each z-level in the new mu 3D array, where the row has the proportions of new recruits from each phenotype (column) that are in the genotype that this z-level of the array corresponds to
+    # See "reproduction_function" file for more info in comments
     new_cohort_genotypes<-mapply(function(k) scroll_through_phenotypes(k, expressed, genotype), seq(1, genotypes))
     mu[1,,] <- new_cohort_genotypes
   }
@@ -221,8 +234,6 @@ advance_age <- function(matrix) {
   matrix[1,] <- 0
   return(matrix)
 }
-
-
 
 
 
