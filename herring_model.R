@@ -21,7 +21,7 @@ for (results_counter in 1:10) {
   source("growth_functions.R")
   
   # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
-  longevity_days = 9125
+  longevity_days = 5475
   # set runtime to any arbitrary desired value, in units of days, that is a multiple of 365
   runtime_days =  400*91.25 # 150*365 # 20*365
   genotypes = 20
@@ -40,12 +40,12 @@ for (results_counter in 1:10) {
   # The steepness of the increase in the ratio lambda (reversible over structural mass)
   r = 6
   # The length at which the increasing function of lambda reaches its inflection point
-  l_bar = 0.2
+  l_bar = 0
   # Scaling parameter for obtaining structural mass from standard length
   c_1 = 5735
   c_2 = 3.125
   # Maximum ratio lambda (reversible over structural mass) a fish can attain over its life
-  lambda_max = 1.3
+  lambda_max = 1.13
   # Minimum ratio lambda a fish can attain over its life
   lambda_min = 0
   # Multiplier for obtaining cost of maintenance of structural mass
@@ -64,7 +64,7 @@ for (results_counter in 1:10) {
   # Instantaneous base mortality rate, derived from daily instantaneous probability of survival for M=-0.2, multiplied to -1 to make positive
   m = log(0.999452)*(-1)
   # Instantaneous fishing mortality
-  Fishing = 0 # log(0.9986015)*(-1) # for 0.4
+  Fishing = 0 
   # Ricker
   alpha = 7.5e-4
   b = 2.84e-6
@@ -116,8 +116,8 @@ for (results_counter in 1:10) {
                      matrix(data=0, nrow=longevity, ncol=genotypes),
                      array(data=0, dim=c(longevity, genotypes, genotypes)))
   # YOY individuals sizes and lengths - the model begins with a set number of YOY individuals
-  timepoint1[[1]][1,] <- 3.938
-  timepoint1[[2]][1,] <- 0.1102
+  timepoint1[[1]][1,] <- 1.4
+  timepoint1[[2]][1,] <- 0.057
   # Setting initial number of individuals
   timepoint1[[3]][1,] <- 100
   # Genotypes initially correspond perfectly to phenotypes
@@ -157,22 +157,28 @@ for (results_counter in 1:10) {
 model_run <-function(list, x) {
   # Adding fishing after a certain time point
   if (x==round(add_genotypes/timescale)) {
-    Fishing <<- 0 # log(0.990439)*(-1)
+    Fishing <<- Fishing_add
   }
   # Adding differences between genotypes
-  # if (x==round(add_genotypes/timescale)) {
   if (x==round(add_genotypes/timescale)) {
-    # l_bar <<- seq(0.1, 0.3, by = 0.2/(genotypes-1))
-    r <<- seq(1, 11, by = 10/(genotypes-1))
+    r <<- seq(0, 12, by = (12-0)/(genotypes-1))
     r<<-matrix(rep(r,each=longevity),nrow=longevity)
   }
   new_E_l <<- list(list[[1]], list[[2]])
   new_mu_exp <<- list[[3]]
+  # Generate vectors of random values, with some degree of temporal correlation phi
+  times <- 1:round(timescale)
+  mat <- as.matrix(dist(times, diag = T, upper= T))
+  phi = 0.11
+  AR_mat <- as.matrix(phi^mat)
+  L <- t(chol(AR_mat))
+  ar_var <- L%*%matrix(rnorm(round(timescale)*round(timescale),0,r_SD), ncol= round(timescale))*sqrt(1-phi^2)
+  random_values <- ar_var[,1]
   mapply ( function(growing) {
     # New E and l values for each cohort-genotype combo
     new_E_l <<- get_pre_reproductive_size(new_E_l[[1]], new_E_l[[2]], resource, new_mu_exp)
     # Compute a random value for calculating r
-    random_value <- rnorm(1,mean=0, sd=r_SD)
+    random_value <- random_values[growing]
     resource <<- resource + resource*((resource_K-resource)/resource_K)*resource_r*(exp(random_value)/(1+exp(random_value))) - new_E_l[[3]]
     # New population sizes for each cohort-genotype combo, after mortality in prior to breeding
     new_mu_exp <<- mortality(new_mu_exp, new_E_l[[1]], new_E_l[[2]])
@@ -180,6 +186,7 @@ model_run <-function(list, x) {
   # Record resource level
   resources[x] <<- resource
   # Record consumption level
+  # Resource consumption is only for last day within period of days in 'timescale' (i.e., last day of season if timescale = 365/4)
   resource_consumption[x] <<- new_E_l[[3]]
   # Add oldest and second-oldest cohorts
   new_mu_exp[nrow(new_mu_exp)-1,] <- new_mu_exp[nrow(new_mu_exp),] + new_mu_exp[nrow(new_mu_exp)-1,]
@@ -192,7 +199,7 @@ model_run <-function(list, x) {
   mu[2:nrow(mu),,] <- mu[1:(nrow(mu)-1),,]
   mu[1,,] <- 0
   # Reproduction is seasonal
-  if (x%%round(365/timescale) == 0) {
+  if ((breeding_season==T) & x%%round(365/timescale ) == 0 & x!=runtime) {
     # Get the amount of eggs produced and the amounts produced by each cohort-genotype combo, and a new E after reversible energy is depleted by mating
     fecundity_object <- fecundity(new_E_l[[1]], new_E_l[[2]], new_mu_exp)
     new_E_l[[1]] <- fecundity_object[[3]]
@@ -202,17 +209,17 @@ model_run <-function(list, x) {
     new_mu_exp <- inheritance_object[[4]]
     # Give the YOY their sizes and lengths, if there are any
     if (sum(new_mu_exp[1,]) > 0) {
-      new_E_l[[1]][1,] <- 3.938
-      new_E_l[[2]][1,] <- 0.1102
+      new_E_l[[1]][1,] <- 1.4
+      new_E_l[[2]][1,] <- 0.057
     }
     # Create vectors with length=number of new individuals, where each value is the individual's expressed phenotype (for "expressed") and their genotype (for "genotype")
     mu <- inheritance_object[[1]]
     expressed <- inheritance_object[[2]]
     genotype <- inheritance_object[[3]]
-    if (length(expressed)!=length(genotype)) {
-      print("bad")
-    }
+    # length(expressed) should == length(genotype)
     # Filling in the genotypes of the new recruits
+    # The scroll_through_genotypes function will create a row for each z-level in the new mu 3D array, where the row has the proportions of new recruits from each phenotype (column) that are in the genotype that this z-level of the array corresponds to
+    # See "reproduction_function" file for more info in comments
     new_cohort_genotypes<-mapply(function(k) scroll_through_phenotypes(k, expressed, genotype), seq(1, genotypes))
     mu[1,,] <- new_cohort_genotypes
   }
@@ -230,11 +237,16 @@ advance_age <- function(matrix) {
 
 
 
+
+
+
+
 # ^
 # v
 
 # Huss et al. 2012 herring model
 # http://esapubs.org/archive///////ecol/E093/075/appendix-A.htm
+# file:///Users/mschumm/O_lab/ecoevoharvestmodel/non_code/Huss_etal_AppendixA.htm
 
 # key "parameteriz"
 
