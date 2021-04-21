@@ -6,11 +6,10 @@
   results_popn <- vector(mode = "list", length = 320)
   results_biomass <- vector(mode = "list", length = 320)
   
-  randos_vec <- rep(seq(0,42,by=6), each=40,times=1)*0.01
+  randos_vec <- rep(seq(0,42,by=6), each=40,times=1)*0.03
   fishing_vec <- rep(2:9,each=5, times=8)*0.1
   
-  for (results_counter in 1:320) {
-    
+  for (results_counter in 271:279) {
     # Dependent packages
     library(pbapply)
     library(truncnorm)
@@ -181,7 +180,8 @@ model_run <-function(list, x) {
     # Compute a random value for calculating r
     random_value <- random_values[growing]
     random_resource_K <- resource_K*(exp(random_value)/(1+exp(random_value)) + 0.2689414)
-    resource <<- resource + resource*((random_resource_K-resource)/random_resource_K)*resource_r - new_E_l[[3]]
+    net_resource <- resource + resource*((random_resource_K-resource)/random_resource_K)*resource_r - new_E_l[[3]]
+    resource <<- ifelse(net_resource>0, net_resource, 1)
     # New population sizes for each cohort-genotype combo, after mortality in prior to breeding
     new_mu_exp <<- mortality(new_mu_exp, new_E_l[[1]], new_E_l[[2]])
   }, 1:round(timescale))
