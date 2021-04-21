@@ -12,9 +12,9 @@ herring_size_dependent_energy_intake <- function(S) {
   AR =  AR_1 * (((AR_2)*S/M_opt) * exp(1-((AR_2)*S/M_opt)) )^(AR_3)
   # Digestion
   H = H_1*((AR_2*S)^(H_2))
-  value_to_return <-timescale*((AR*AR_4)/(AR*AR_4*H+1))*K_e
+  value_to_return <-((AR*AR_4)/(AR*AR_4*H+1))*K_e
   value_to_return[is.nan(value_to_return)] <- 0
-  return( value_to_return / 365 )
+  return( value_to_return )
 }
 
 # Calculate the intrinsic length-dependent E/S ratio that the fish is trying to attain
@@ -66,7 +66,7 @@ get_pre_reproductive_size <- function(E_past, l_past, resource, new_mu_exp) {
   p_net[surplus > 0] <- p_net[surplus > 0] - p_E[surplus > 0]*(1/e_E)
   E[surplus > 0] = E[surplus > 0] + e_E*p_net[surplus > 0]*remaining_energy_allocation_E(e_S, e_E, lambda_l)[surplus > 0]
   S[surplus > 0] = S[surplus > 0] + e_S*p_net[surplus > 0]*remaining_energy_allocation_S(e_S, e_E, lambda_l)[surplus > 0]
-  l = (S*(1/c_1))^(1/3)
+  l = (S*(1/c_1))^(1/c_2)
   output <- list(E,l,consumed_resource)
   return(output)
 }

@@ -9,7 +9,7 @@ results_biomass <- vector(mode = "list", length = 320)
 randos_vec <- rep(seq(0,42,by=6), each=40,times=1)*0.03
 fishing_vec <- rep(2:9,each=5, times=8)*0.1
 
-for (results_counter in 1:320) {
+for (results_counter in 1:2) {
   
   # Dependent packages
   library(pbapply)
@@ -21,7 +21,7 @@ for (results_counter in 1:320) {
   
   source("mortality_functions.R")
   
-  source("reproduction_functions.R")
+  source("herring_reproduction_functions.R")
   
   source("herring_growth_functions.R")
   
@@ -62,10 +62,12 @@ for (results_counter in 1:320) {
   # Efficiency with which energy is converted to structural mass
   e_S = 0.5
   # Multiplier and exponent for the cost of reproduction (in grams)
+  # These have a different interpretation for herring
   r_0 = 0.7
   r_1 = 1
   # Effectively, reproductive investment (fraction of reversible mass devoted to reproduction)
-  w= 0.674
+  # This has a different interpretation for herring
+  w= 1
   # Instantaneous base mortality rate, derived from daily instantaneous probability of survival for M=-0.2, multiplied to -1 to make positive
   m = log(0.999452)*(-1)
   # Instantaneous fishing mortality
@@ -75,8 +77,8 @@ for (results_counter in 1:320) {
   Fishing_add = log((1-Fishing_add)^(1/365))*(-1)
   # Ricker
   # Based on Lynam et al. 2005 MEPS paper
-  alpha = 7.5e-4
-  b = 2.84e-6
+  alpha = 3.48e-11
+  b = 2.6e-16
   # Parameter setting size-selection ogive steepness
   q_f = 0.2
   # Minimum catch size for the species (in meters)
@@ -94,9 +96,9 @@ for (results_counter in 1:320) {
   # Parameter for exponential decline in predation mortality with increased body length
   z_p=8
   # Amount of resource (initial)
-  resource <- 3e+11
+  resource <- 3e+15
   # Resource carrying capacity
-  resource_K <- 3e+11
+  resource_K <- 3e+15
   # Resource intrinsic growth rate
   resource_r <- 1.5
   # Resource variability
@@ -125,7 +127,7 @@ for (results_counter in 1:320) {
                      matrix(data=0, nrow=longevity, ncol=genotypes),
                      array(data=0, dim=c(longevity, genotypes, genotypes)))
   # YOY individuals sizes and lengths - the model begins with a set number of YOY individuals
-  timepoint1[[1]][1,] <- 1.4
+  timepoint1[[1]][1,] <- 0.3712037
   timepoint1[[2]][1,] <- 0.057
   # Setting initial number of individuals
   timepoint1[[3]][1,] <- 100
@@ -218,7 +220,7 @@ model_run <-function(list, x) {
     new_mu_exp <- inheritance_object[[4]]
     # Give the YOY their sizes and lengths, if there are any
     if (sum(new_mu_exp[1,]) > 0) {
-      new_E_l[[1]][1,] <- 1.4
+      new_E_l[[1]][1,] <- 0.3712037
       new_E_l[[2]][1,] <- 0.057
     }
     # Create vectors with length=number of new individuals, where each value is the individual's expressed phenotype (for "expressed") and their genotype (for "genotype")
