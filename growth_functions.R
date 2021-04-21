@@ -22,7 +22,7 @@ maintenance_cost <- function(S, E, c_S, c_E) {
 
 # Function for calculating a new, reduced level of reversible biomass, if net energy intake is negative
 E_for_maintenance <- function(E, p_net, e_E) {
-  E[E < 0] <- E[E < 0] + p_net*(1/e_E)
+  E[p_net < 0] <- E[p_net < 0] + p_net[p_net < 0]*(1/e_E)
   return(E)
 }
 
