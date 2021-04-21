@@ -6,13 +6,15 @@ structural_mass <- function(l) {
 }
 
 # Energy intake for the fish per year, dependent on fish structural biomass
-size_dependent_energy_intake <- function(S) {
+herring_size_dependent_energy_intake <- function(S) {
   # Numeric values from Ecological Archives E093-075-A1
   # Attack rate
   AR =  AR_1 * (((AR_2)*S/M_opt) * exp(1-((AR_2)*S/M_opt)) )^(AR_3)
   # Digestion
   H = H_1*((AR_2*S)^(H_2))
-  return( timescale*((AR*AR_4)/(AR*AR_4*H+1))*K_e )
+  value_to_return <-timescale*((AR*AR_4)/(AR*AR_4*H+1))*K_e
+  value_to_return[is.nan(value_to_return)] <- 0
+  return( value_to_return / 365 )
 }
 
 # Calculate the intrinsic length-dependent E/S ratio that the fish is trying to attain
@@ -27,7 +29,7 @@ maintenance_cost <- function(S, E, c_S, c_E) {
 
 # Function for calculating a new, reduced level of reversible biomass, if net energy intake is negative
 E_for_maintenance <- function(E, p_net, e_E) {
-  E[E < 0] <- E[E < 0] + p_net*(1/e_E)
+  E[p_net < 0] <- E[p_net < 0] + p_net[p_net < 0]*(1/e_E)
   return(E)
 }
 
@@ -51,8 +53,8 @@ get_pre_reproductive_size <- function(E_past, l_past, resource, new_mu_exp) {
   S = S_past
   E = E_past
   lambda_l = intrinsic_lambda(l_past, l_bar, r, lambda_min, lambda_max)
-  consumed_resource <- sum(size_dependent_energy_intake(S_past)*new_mu_exp*(resource/(K_half+resource)))
-  p_net = size_dependent_energy_intake(S_past)*(resource/(K_half+resource)) - maintenance_cost(S_past, E_past, c_S, c_E)
+  consumed_resource <- sum(herring_size_dependent_energy_intake(S_past)*new_mu_exp*(resource/(K_half+resource)))
+  p_net = herring_size_dependent_energy_intake(S_past)*(resource/(K_half+resource)) - maintenance_cost(S_past, E_past, c_S, c_E)
   E = E_for_maintenance(E, p_net, e_E)
   p_net[p_net < 0] <- 0
   p_E <- p_E_raising_lambda(lambda_l, S, E)
