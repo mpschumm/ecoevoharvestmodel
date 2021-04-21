@@ -59,7 +59,7 @@ get_pre_reproductive_size <- function(E_past, l_past, resource, new_mu_exp) {
   p_net[surplus > 0] <- p_net[surplus > 0] - p_E[surplus > 0]*(1/e_E)
   E[surplus > 0] = E[surplus > 0] + e_E*p_net[surplus > 0]*remaining_energy_allocation_E(e_S, e_E, lambda_l)[surplus > 0]
   S[surplus > 0] = S[surplus > 0] + e_S*p_net[surplus > 0]*remaining_energy_allocation_S(e_S, e_E, lambda_l)[surplus > 0]
-  l = (S*(1/c_1))^(1/3)
+  l = (S*(1/c_1))^(1/c_2)
   output <- list(E,l,consumed_resource)
   return(output)
 }
