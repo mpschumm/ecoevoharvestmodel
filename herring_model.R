@@ -9,7 +9,7 @@ results_biomass <- vector(mode = "list", length = 320)
 randos_vec <- rep(seq(0,42,by=6), each=40,times=1)*0.03
 fishing_vec <- rep(2:9,each=5, times=8)*0.1
 
-for (results_counter in 1:2) {
+for (results_counter in 16:20) {
   
   # Dependent packages
   library(pbapply)
@@ -43,7 +43,7 @@ for (results_counter in 1:2) {
   
   # Set parameters
   # The steepness of the increase in the ratio lambda (reversible over structural mass)
-  r = 6
+  r = 12
   # The length at which the increasing function of lambda reaches its inflection point
   l_bar = 0
   # Scaling parameter for obtaining structural mass from standard length
@@ -73,7 +73,7 @@ for (results_counter in 1:2) {
   # Instantaneous fishing mortality
   Fishing = 0 
   # For what fishing level to add when fishing is introduced partway through the simulation - put yearly instantaneous fishing mortality
-  Fishing_add = fishing_vec[results_counter]
+  Fishing_add = 0 # fishing_vec[results_counter]
   Fishing_add = log((1-Fishing_add)^(1/365))*(-1)
   # Ricker
   # Based on Lynam et al. 2005 MEPS paper
@@ -102,7 +102,7 @@ for (results_counter in 1:2) {
   # Resource intrinsic growth rate
   resource_r <- 1.5
   # Resource variability
-  r_SD = randos_vec[results_counter]
+  r_SD = 0 # randos_vec[results_counter]
   # Consumer functional response half-saturation constant
   K_half <- 6e+10
   # Additional herring parameters
@@ -148,14 +148,18 @@ for (results_counter in 1:2) {
   
   for (tracker_counter in 1:genotypes) {
     mature<-(w*as.vector(timepoints[[runtime]][[1]][,tracker_counter])-as.vector((r_0*(structural_mass(timepoints[[runtime]][[2]][,tracker_counter]))^(r_1))))
-    phenotype_averages[1,tracker_counter] <- which(mature==min(mature[mature>0]))
+    if (!(all(mature<=0))) {
+    phenotype_averages[1,tracker_counter] <- try(which(mature==min(mature[mature>0])))
     phenotype_averages[2,tracker_counter] <- timepoints[[runtime]][[2]][phenotype_averages[1,tracker_counter],tracker_counter]
     phenotype_averages[3,tracker_counter] <- timepoints[[runtime]][[3]][phenotype_averages[1,tracker_counter],tracker_counter]
+    }
   }
+  
+  phenotype_averages[is.na(phenotype_averages)] <- 0
   
   phenotype_averages[3,] <- phenotype_averages[3,]/sum(phenotype_averages[3,])
   
-  results_inflection[results_counter] <- sum(c(1:genotypes)*(timepoints[[runtime]][[3]][1,]/sum(timepoints[[runtime]][[3]][1,])))
+  results_inflection[results_counter] <- sum(c(1:genotypes)*(timepoints[[runtime-(365/timescale)]][[3]][1,]/sum(timepoints[[runtime-(365/timescale)]][[3]][1,])))
   results_AAM[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[1,])
   results_LAM[results_counter] <- sum(phenotype_averages[3,]*phenotype_averages[2,])
   
@@ -172,7 +176,7 @@ model_run <-function(list, x) {
   }
   # Adding differences between genotypes
   if (x==round(add_genotypes/timescale)) {
-    r <<- seq(0, 12, by = (12-0)/(genotypes-1))
+    r <<- seq(6, 18, by = (12-0)/(genotypes-1))
     r<<-matrix(rep(r,each=longevity),nrow=longevity)
   }
   new_E_l <<- list(list[[1]], list[[2]])

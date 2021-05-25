@@ -14,7 +14,7 @@ herring_size_dependent_energy_intake <- function(S) {
   H = H_1*((AR_2*S)^(H_2))
   value_to_return <-((AR*AR_4)/(AR*AR_4*H+1))*K_e
   value_to_return[is.nan(value_to_return)] <- 0
-  return( value_to_return )
+  return( value_to_return * 1.5 )
 }
 
 # Calculate the intrinsic length-dependent E/S ratio that the fish is trying to attain
