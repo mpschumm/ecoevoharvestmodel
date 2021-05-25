@@ -9,7 +9,7 @@
   randos_vec <- rep(seq(0,42,by=6), each=40,times=1)*0.03
   fishing_vec <- rep(2:9,each=5, times=8)*0.1
   
-  for (results_counter in 271:279) {
+  for (results_counter in 1:320) {
     # Dependent packages
     library(pbapply)
     library(truncnorm)
@@ -102,7 +102,7 @@
     # Resource variability
     r_SD = randos_vec[results_counter]
     # Consumer functional response half-saturation constant
-    K_half <- 6e+10
+    K_half <- 3e+10
     
     # Initializing the matrices for the first time point
     timepoints <- vector(mode = "list", length = runtime)
@@ -172,14 +172,14 @@ model_run <-function(list, x) {
   phi = 0.8
   AR_mat <- as.matrix(phi^mat)
   L <- t(chol(AR_mat))
-  ar_var <- L%*%matrix(rnorm(round(timescale)*round(timescale),0,r_SD), ncol= round(timescale))*sqrt(1-phi^2)
-  random_values <- as.vector(ar_var[,1]) + 1
+  ar_var <- L%*%matrix(rnorm(round(timescale)*round(timescale),0,1), ncol= round(timescale))*r_SD*sqrt(1-phi^2)
+  random_values <- as.vector(ar_var[,1])
   mapply ( function(growing) {
     # New E and l values for each cohort-genotype combo
     new_E_l <<- get_pre_reproductive_size(new_E_l[[1]], new_E_l[[2]], resource, new_mu_exp)
     # Compute a random value for calculating r
     random_value <- random_values[growing]
-    random_resource_K <- resource_K*(exp(random_value)/(1+exp(random_value)) + 0.2689414)
+    random_resource_K <- resource_K*(exp(random_value - (r_SD^2)/2))
     net_resource <- resource + resource*((random_resource_K-resource)/random_resource_K)*resource_r - new_E_l[[3]]
     resource <<- ifelse(net_resource>0, net_resource, 1)
     # New population sizes for each cohort-genotype combo, after mortality in prior to breeding
