@@ -17,7 +17,7 @@ size_dependent_energy_intake <- function(S, p_0, p_1) {
 
 # Calculate the cost of the year of maintaining current structural and reversible biomass
 maintenance_cost <- function(S, E, c_S, c_E) {
-  return(c_S*S + c_E*E)
+  return(c_S*S^0.8 + c_E*E^0.8)
 }
 
 # Function for calculating a new, reduced level of reversible biomass, if net energy intake is negative

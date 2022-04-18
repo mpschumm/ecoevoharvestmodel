@@ -93,13 +93,14 @@ r =6
 a_bar = 0.2
 lambda_min=0
 
-lambda_max=1.3
+lambda_max=1.13
 
 for (i in 1:100) {
   ratios[i] <- lambda_min + (lambda_max-lambda_min)*(exp(r*((i/100)-a_bar)))/(1+exp(r*((i/100)-a_bar)))
 }
-plot(0:(length(ratios)-1), ratios, xlab="length (cm)", ylab="Ratio of energy to be allocated to reversible:irr.", type="l", ylim=c(0,2))
-abline(h=1.3)
+plot(0:(length(ratios)-1), ratios, xlab="length (cm)", ylab="Ratio of energy to be allocated to reversible:irr.", type="l", ylim=c(lambda_min, lambda_max))
+abline(h=1.13)
+abline(h=0.7, col="red")
 ```
 
 (Eq. 3) $\large \rho(S) = \rho_{0}S^{\rho_{1}}\frac{X}{K_X+X}$, where $\rho$ is energy intake, $\rho_{0}$ and $\rho_{1}$ are constants, X is resource density (and $K_X$ is a saturation coefficient).
@@ -197,13 +198,13 @@ There are FOUR terms included in the exponent for instantaneous mortality. The f
 
 ```{r}
 curve(exp(-8*x), from =0, to=1, xlab="Length in m.", ylab="Additional natural mortality", main="Predation mortality with length")
-curve(exp(-7*x), from =0, to=1.5, xlab="(E/S), or Lambda_actual", ylab="Additional natural mortality", main="Body condition-related mortality with body condition (E/S)")
+curve(exp(-70*x), from =0, to=1.5, xlab="(E/S), or Lambda_actual", ylab="Additional natural mortality", main="Body condition-related mortality with body condition (E/S)")
 ```
 
 (Eq. 13) Selectivity = $\large \frac{1}{1+e^{-q_f*(length(cm)-mincatchsize)}}$
 
 ```{r}
-curve(1/(1+exp(-0.2*(x - 50))), from =0, to=150, xlab="Length in cm.", ylab="proportion maximum fishing mortality", main="Selectivity of harvest")
+curve(1/(1+exp(-0.1*(x - 50))), from =0, to=150, xlab="Length in cm.", ylab="proportion maximum fishing mortality", main="Selectivity of harvest")
 ```
 
 &nbsp;
@@ -988,11 +989,11 @@ plot(repro_vec-repro_vec_1, ylab="Reproduction of genotype 2 - genotype 1", main
 
 plot(length_ratio$length, length_ratio$ratio, xlim=c(0,1), ylim=c(0,1.3))
 ratios <- vector(mode="numeric", length=100)
-r =1
+r =6
 # In days
-a_bar = 0.2
+a_bar = 0
 lambda_min=0
-lambda_max=1.3
+lambda_max=1.13
 for (i in seq(0.01,1,by=0.01)) {
 ratios[round(i*100)] <- lambda_min + (lambda_max-lambda_min)*(exp(r*(i-a_bar)))/(1+exp(r*(i-a_bar)))
 }

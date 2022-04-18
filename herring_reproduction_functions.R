@@ -2,17 +2,16 @@
 
 fecundity <- function(E, l, mu_exp) {
   # Calculate potential reproductive contribution in terms of biomass, with cost to reproduce substracted
-  repro_biomass<-0.5*(w*E-r_0*structural_mass(l)^(r_1))*mu_exp
-  repro_biomass_individual<-((w*E-(r_0*structural_mass(l))^(r_1)))
+  repro_biomass<-w*(E-r_0*structural_mass(l)^(r_1))*mu_exp
+  repro_biomass_individual<-((E-(r_0*structural_mass(l))^(r_1)))
   # Zero out negative reproductive biomass - these individuals don't spawn
   repro_biomass[repro_biomass < 0] <- 0 
   repro_biomass_individual[repro_biomass_individual < 0] <- 0 
   E <- E - repro_biomass_individual
-  total_fecundity <- sum(repro_biomass)
-  # Convert from g. to kg.
-  total_fecundity = total_fecundity/1000
-  # Convert from kg. to fecundity
-  total_fecundity = total_fecundity*(packing)
+  # Calculate spawning stock biomass in grams
+  total_fecundity = sum(E[repro_biomass > 0]*mu_exp[repro_biomass > 0]) + sum(structural_mass(l[repro_biomass > 0])*mu_exp[repro_biomass > 0]) 
+  # in tonnes
+  total_fecundity = total_fecundity*(1e-6)
   return(list(total_fecundity, repro_biomass, E))
 }
 

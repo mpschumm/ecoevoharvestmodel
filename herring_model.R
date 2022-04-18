@@ -9,7 +9,7 @@ results_biomass <- vector(mode = "list", length = 320)
 randos_vec <- rep(seq(0,42,by=6), each=40,times=1)*0.03
 fishing_vec <- rep(2:9,each=5, times=8)*0.1
 
-for (results_counter in 16:20) {
+for (results_counter in 1:20) {
   
   # Dependent packages
   library(pbapply)
@@ -19,7 +19,7 @@ for (results_counter in 16:20) {
   
   # run files containing functions for growth, reproduction and mortality processes
   
-  source("mortality_functions.R")
+  source("herring_mortality_functions.R")
   
   source("herring_reproduction_functions.R")
   
@@ -43,9 +43,9 @@ for (results_counter in 16:20) {
   
   # Set parameters
   # The steepness of the increase in the ratio lambda (reversible over structural mass)
-  r = 12
+  r = 3
   # The length at which the increasing function of lambda reaches its inflection point
-  l_bar = 0
+  l_bar = 0.1
   # Scaling parameter for obtaining structural mass from standard length
   c_1 = 5735
   c_2 = 3.125
@@ -58,66 +58,63 @@ for (results_counter in 16:20) {
   # Multiplier for obtaining cost of maintenance of reversible mass
   c_E = 0.03 # *timescale
   # Efficiency with which energy is converted into reversible mass
-  e_E = 0.5
+  e_E = 1
   # Efficiency with which energy is converted to structural mass
-  e_S = 0.5
+  e_S = 1
   # Multiplier and exponent for the cost of reproduction (in grams)
   # These have a different interpretation for herring
   r_0 = 0.7
   r_1 = 1
   # Effectively, reproductive investment (fraction of reversible mass devoted to reproduction)
   # This has a different interpretation for herring
-  w= 1
+  w= 0.5
   # Instantaneous base mortality rate, derived from daily instantaneous probability of survival for M=-0.2, multiplied to -1 to make positive
   m = log(0.999452)*(-1)
   # Instantaneous fishing mortality
   Fishing = 0 
   # For what fishing level to add when fishing is introduced partway through the simulation - put yearly instantaneous fishing mortality
-  Fishing_add = 0 # fishing_vec[results_counter]
+  Fishing_add = fishing_vec[results_counter]
   Fishing_add = log((1-Fishing_add)^(1/365))*(-1)
   # Ricker
   # Based on Lynam et al. 2005 MEPS paper
-  alpha = 3.48e-11
-  b = 2.6e-16
+  alpha = 1.16e-1
+  b = 8.53e-7
   # Parameter setting size-selection ogive steepness
-  q_f = 0.2
+  q_f = 0.5
   # Minimum catch size for the species (in meters)
-  mincatchsize = 0.3
+  mincatchsize = 0.25
   # Total population biomass
   b_t=0
   # Increased natural mortality rate at E/S = 0 or S = 0 
   # For roughly 0.5 year-based instantaneous mortality at ~1 yrs., Koster et al 2003
-  m_p_max=log(0.9986)*(-1)
+  m_p_max=log(0.99)*(-1)
   m_c_max=log(0.95)*(-1)
   # Egg packing constant
   packing = 3333333
-  # Parameter for exponential decline in condition-dependent mortality with improved body condition
-  z_c=7
   # Parameter for exponential decline in predation mortality with increased body length
-  z_p=8
+  z_p=3.4
   # Amount of resource (initial)
-  resource <- 3e+15
+  resource <- 3e+11
   # Resource carrying capacity
-  resource_K <- 3e+15
+  resource_K <- 3e+11
   # Resource intrinsic growth rate
   resource_r <- 1.5
   # Resource variability
-  r_SD = 0 # randos_vec[results_counter]
+  r_SD =  randos_vec[results_counter]
   # Consumer functional response half-saturation constant
-  K_half <- 6e+10
+  K_half <- 3e+10
   # Additional herring parameters
   # Attack rate
   AR_1=150
   AR_2=1.7
   AR_3=0.5
-  AR_4 = 25
   # Digestion
   H_1=4.8
   H_2=-0.74
   # Food conversion efficiency
-  K_e=0.5
+  K_e=0.85
   # Optimal size for consuming part of resource
-  M_opt= 50
+  M_opt= 327
   
   # Initializing the matrices for the first time point
   timepoints <- vector(mode = "list", length = runtime)
@@ -130,7 +127,7 @@ for (results_counter in 16:20) {
   timepoint1[[1]][1,] <- 0.3712037
   timepoint1[[2]][1,] <- 0.057
   # Setting initial number of individuals
-  timepoint1[[3]][1,] <- 100
+  timepoint1[[3]][1,] <- 10000
   # Genotypes initially correspond perfectly to phenotypes
   timepoint1[[4]][1,,] <- diag(genotypes)
   timepoints[[1]] <- timepoint1
@@ -147,9 +144,9 @@ for (results_counter in 16:20) {
   phenotype_averages <- matrix(nrow=3, ncol=genotypes)
   
   for (tracker_counter in 1:genotypes) {
-    mature<-(w*as.vector(timepoints[[runtime]][[1]][,tracker_counter])-as.vector((r_0*(structural_mass(timepoints[[runtime]][[2]][,tracker_counter]))^(r_1))))
+    mature <- (as.vector(timepoints[[runtime]][[1]][,tracker_counter])-as.vector((r_0*(structural_mass(timepoints[[runtime]][[2]][,tracker_counter]))^(r_1))))
     if (!(all(mature<=0))) {
-    phenotype_averages[1,tracker_counter] <- try(which(mature==min(mature[mature>0])))
+    phenotype_averages[1,tracker_counter] <- try(which(mature==(mature[mature>0])[1]))
     phenotype_averages[2,tracker_counter] <- timepoints[[runtime]][[2]][phenotype_averages[1,tracker_counter],tracker_counter]
     phenotype_averages[3,tracker_counter] <- timepoints[[runtime]][[3]][phenotype_averages[1,tracker_counter],tracker_counter]
     }
@@ -176,7 +173,7 @@ model_run <-function(list, x) {
   }
   # Adding differences between genotypes
   if (x==round(add_genotypes/timescale)) {
-    r <<- seq(6, 18, by = (12-0)/(genotypes-1))
+    r <<- seq(0, 5, by = (5-0)/(genotypes-1))
     r<<-matrix(rep(r,each=longevity),nrow=longevity)
   }
   new_E_l <<- list(list[[1]], list[[2]])
