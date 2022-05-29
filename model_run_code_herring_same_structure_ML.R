@@ -24,7 +24,7 @@ model_iteration <<- function(results_counter) {
   
   source("growth_functions_backup.R")
   
-  # Set longevity of the fish species, runtime of the model, and number of distinct genotypes
+  # Set longevity of the fish species, runtime of the model, and number of loci
   a_max_days <<- 5475
   # set runtime to any arbitrary desired value, in units of days, that is a multiple of 365
   runtime_days <<-  100*365 # 100*365 for 36500 days = 100 years
@@ -50,7 +50,7 @@ model_iteration <<- function(results_counter) {
   # From Huss et al
   c_1 <<- 5735
   c_2 <<-  3.125
-  # Multiplier for obtaining overall yearly energy intake as a function of structural mass
+  # Multiplier for obtaining overall daily energy intake as a function of structural mass
   # See Mitchell Jones' 2014 UVM thesis and Rudstam cited within - NOT considering increased costs (and increased consumption) during travel (which our model does explicitly model), this value is reasonable
   p_0 <<-  0.3
   # Exponent for obtaining overall daily energy intake as a function of structural mass
