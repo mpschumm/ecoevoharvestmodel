@@ -1,5 +1,5 @@
 extract_output <- function(object) {
-data_list <- set_1 # Use whatever the name is of the workspace object to which the results of the mclapply run were assigned 
+data_list <- object # Use whatever the name is of the workspace object to which the results of the mclapply run were assigned 
 no_runs <-7000 # How many runs are contained in the object to which the mclapply results were assigned?
 mat = matrix(, nrow = no_runs, ncol = 16) # Set up a matrix to hold the results
 mapply(function(x) mapply(function(y) try(mat[x,y] <<- data_list[[x]][[y]]), y=c(1:6,12:13)), x=c(1:no_runs))
