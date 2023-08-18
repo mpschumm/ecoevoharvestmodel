@@ -1,0 +1,1 @@
+This is the github repository for the paper "Food variation alters and obscures fisheries-induced evolution". Please see https://ecoevoenergymodels.shinyapps.io/Supplement/ for a description of the purpose of the code files in this repo. Please see the "figure_data+code" folder in this repo for data (simulated values) used for figures and the code for plotting the figures.
