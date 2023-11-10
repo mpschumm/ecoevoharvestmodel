@@ -66,6 +66,7 @@ model_iteration <<- function(results_counter) {
   # Efficiency with which energy is converted to structural mass
   e_S <<- (1/3)
   # Multiplier and exponent for the cost of reproduction (in grams)
+  # renamed to o_0 and o_1 in latest draft of manuscript
   r_0 <<- 6
   r_1 <<- 0.6
   # Effectively, reproductive investment (fraction of reversible mass devoted to reproduction)
@@ -82,6 +83,7 @@ model_iteration <<- function(results_counter) {
   Alpha <<- 8.44e-09
   b <<- 4.43e-15
   # Parameter setting size-selection ogive steepness
+  # renamed to z_f in latest draft of manuscript
   q_f <<- 0.5
   # Minimum catch size for the species (in meters)
   mincatchsize <<- 0.5
