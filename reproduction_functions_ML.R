@@ -2,6 +2,7 @@
 
 fecundity <- function(E, l, mu_exp) {
   # Calculate potential reproductive contribution in terms of biomass, with all of the indirect costs of spawning (movement, behavioral, etc.) subtracted
+  # r_0 and r_1 are renamed in the latest draft of the manuscript
   repro_biomass<-(w*E-r_0*structural_mass(l)^(r_1))*mu_exp
   # Next calculate the total amount that the fish would be spending on spawning, including both direct costs of egg and indirect costs
   repro_biomass_individual<-w*E
