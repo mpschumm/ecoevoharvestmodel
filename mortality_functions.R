@@ -2,6 +2,7 @@
 
 # Fishing mortality is size selective
 selective_mortality <- function(length) {
+  # q_f was renamed to z_f in the most recent manuscript draft
   1 / (1 + exp(-q_f*(length - mincatchsize)*100))
 }
 
