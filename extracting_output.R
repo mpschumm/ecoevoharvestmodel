@@ -1,3 +1,5 @@
+object<-mclapply(c(1:98000), function(x) { model_iteration(x) }, mc.cores = 80 )
+
 extract_output <- function(object, no_runs) {
 data_list <- object # Use whatever the name is of the workspace object to which the results of the mclapply run were assigned 
 no_runs <-no_runs # How many runs are contained in the object to which the mclapply results were assigned?
@@ -9,3 +11,5 @@ output_all <- na.omit(output_all)
 colnames(output_all) <- c("phys", "AAM", "LAM", "L2", "L3", "Linf", "K_var", "F")
 return(output_all)
 }
+
+

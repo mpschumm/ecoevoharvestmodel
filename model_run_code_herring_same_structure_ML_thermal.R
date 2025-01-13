@@ -1,4 +1,4 @@
-### COD-LIKE MODEL - thermal stochasticity
+### HERRING-LIKE MODEL - thermal stochasticity
 
 # Dependent packages
 library(pbapply)
@@ -28,12 +28,12 @@ model_iteration <<- function(results_counter) {
   
   source("mortality_functions.R")
   
-  source("reproduction_functions_ML.R")
+  source("herring_same_structure_reproduction_functions_ML.R")
   
   source("growth_functions_backup.R")
   
   # Set longevity of the fish species, runtime of the model, and number of loci
-  a_max_days <<- 9125
+  a_max_days <<- 5475
   # set runtime to any arbitrary desired value, in units of days, that is a multiple of 365
   runtime_days <<-  100*365 # 100*365 for 36500 days = 100 years
   loci <<- 20
@@ -42,7 +42,7 @@ model_iteration <<- function(results_counter) {
   # Setting run time and longevity to units of time steps
   runtime <<- round(runtime_days/timescale)
   a_max <<- round(a_max_days/timescale)
-  # Whether fish breeds once a year (has a breeding season), or breeds continously throughout the year except for some period of time
+  # Whether fish breeds once a year (has a breeding season), or breeds continuously throughout the year except for some period of time
   # Cod and herring both have a breeding season, meaning they spawn in just one time step out of year
   breeding_season <<- TRUE
   # How long to run model for convergence before addition of genetic diversity
@@ -55,44 +55,51 @@ model_iteration <<- function(results_counter) {
   # The length at which the increasing function of lambda reaches its inflection point
   l_bar <<- 0.2
   # Scaling parameter for obtaining structural mass from standard length
-  c_1 <<- 5787
-  c_2 <<-  3
+  # From Huss et al
+  c_1 <<- 5735
+  c_2 <<-  3.125
   # Multiplier for obtaining overall daily energy intake as a function of structural mass
-  p_0 <<-  0.1 
+  # See Mitchell Jones' 2014 UVM thesis and Rudstam cited within - NOT considering increased costs (and increased consumption) during travel (which our model does explicitly model), this value is reasonable
+  p_0 <<-  0.3
   # Exponent for obtaining overall daily energy intake as a function of structural mass
   p_1 <<-  2/3
   # Maximum ratio lambda (reversible over structural mass) a fish can attain over its life
-  lambda_max <<- 1.3
+  # From Huss et al
+  lambda_max <<- 1.13
   # Minimum ratio lambda a fish can attain over its life
   lambda_min <<-  0
   # Multiplier for obtaining cost of maintenance of structural mass
-  c_S <<-  0.003 
+  # From Huss et al
+  c_S <<-  0.03 
   # Multiplier for obtaining cost of maintenance of reversible mass
-  c_E <<-  0.0003 
+  c_E <<-  0.03 
   # Efficiency with which energy is converted into reversible mass
   e_E <<-  0.9
   # Efficiency with which energy is converted to structural mass
   e_S <<- (1/3)
   # Multiplier and exponent for the cost of reproduction (in grams)
-  r_0 <<- 6
+  # Megrey et al Ecological Modelling 2007 and other sources put 15-25% total mass lost as typical for reproducing herring, and Huss et al uses 0.5 conversion efficiency of reproductive costs to gametes
+  # Wheeler 2009 says that 30cm is typical length for herring at 50% probability of being mature, which would be S=133.2102 and E=93.24714 (for K=0.7), and mass for all reproduction costs would be 46.6, but halve that for the 0.5 efficiency from Huss
+  r_0 <<- 1.25
   r_1 <<- 0.6
   # Effectively, reproductive investment (fraction of reversible mass devoted to reproduction)
-  w <<- 0.6
+  # The 20% fraction of *total* mass lost during reproduction, and K=0.7 for maturity (Megrey, Rutsdam, Slotte 1999), gives us the fraction of *reversible* mass E specifically that will be spent on reproduction
+  w<<- 0.5
   # Instantaneous base daily mortality rate, derived from daily instantaneous probability of survival for M of 0.2. Multiplied by -1 to make positive.
   m <<- log(0.999452)*(-1)
   # Instantaneous fishing mortality
   Fishing <<- 0
   # For what fishing level to add when fishing is introduced partway through the simulation - this expression takes yearly instantaneous fishing mortality, gives probability of surviving the year
   Fishing_add <<- exp(-1*fishing_vec[results_counter])
-  # Converting yearly probability of survival to daily probability, then log-transforming for daily instantaneous rate
   Fishing_add <<- log((Fishing_add)^(1/365))*(-1)
   # Ricker
-  Alpha <<- 8.44e-09
-  b <<- 4.43e-15
+  # Lynam MEPS 2005
+  Alpha <<- 1.16e-1
+  b <<- 8.53e-7
   # Parameter setting size-selection ogive steepness
   q_f <<- 0.5
   # Minimum catch size for the species (in meters)
-  mincatchsize <<- 0.5
+  mincatchsize <<- 0.3
   # Increased natural mortality rate at low E/S or low S  
   # For roughly 0.5 year-based instantaneous mortality at ~1 yrs. from small-size-based predation mortality, Köster et al 2003
   # https://images.app.goo.gl/HNzVWX17UJEpSiM68
@@ -101,23 +108,25 @@ model_iteration <<- function(results_counter) {
   m_p_max<<-log(0.9986)*(-1)
   # Maximum condition dependent mortality for a daily instantaneous survival probaility of 5% (or anything in 1-10% range) guarantees instantaneous probability of survival of <2% for any fish with truly zero body condition - this is the right order of magnitude for fish to have virtually no chance of survival if their reversible mass is nil
   m_c_max<<-log(0.95)*(-1)
-  # ^ similar modeling papers generally need to assess a range of mortality values for sensitivity and exact ideal values to use are uncertain (e.g., Audzijonyte and Richards 2018 p E156)
+  # ^ similar modeling papers generally need to assess a range of mortality values for sensitivity and exact ideal values to use are uncertain (e.g., Audzijonyte and Richards 2018 p E156)  
   # Egg packing constant
-  packing <<- 4.45e6
+  packing <<- 3333333
   # Parameter for exponential decline in condition-dependent mortality with improved body condition
-  z_c<<-7
+  # Huss et al - a ~5 times faster decline in starvation mortality with increased condition than for the cod-like model, so that this mortality is negligible when E/S > 0.2 (Huss et al)
+  z_c<<-35
   # Parameter for exponential decline in predation mortality with increased body length
   z_p<<-8
   # Amount of resource (initial), set to reasonable starting values by calculating fish population resource consumption
-  resource <<- 3e+11
+  resource <<- 3e+14
   # Resource carrying capacity
-  resource_K <<- 3e+11
+  resource_K <<- 3e+14
   # Resource intrinsic growth rate
   resource_r <<- 1.5
   # Resource variability
   r_SD <<- rand_resource_vec[results_counter]
   # Consumer functional response half-saturation constant
-  K_half <<- 3e+10
+  K_half <<- 3e+13
+  
   # Environmental noise autocorrelation
   phi <<- 0.8
   
@@ -131,19 +140,20 @@ model_iteration <<- function(results_counter) {
   
   # Initializing the matrices for the first time point
   timepoints <<- vector(mode = "list", length = runtime)
-  # Each timepoint consists of a matrix known as E of reversible masses, organized in rows for ages and columns for physiological phenotypes (i.e., what is their function for lambda with length); a matrix of the same organization, named l, for the lengths of fish in each cohort-phenotype combination; a matrix of the same organization for numbers or densities of individuals, mu_exp (for "expressed"), where each column is a different phenotype (differences between the phenotypes before genotypic differences are added will be very minimal and only due to developmental noise); and an array where each z-level is a locus and the cells contain the proportion of each age-phenotype combo that has the '1' allele for that locus
+  # Each timepoint consists of a matrix known as E of reversible masses, organized in rows for ages and columns for physiological phenotypes (i.e., what is their function for lambda with length); a matrix of the same organization, named l, for the lengths of fish in each cohort-phenotype combination; a matrix of the same organization for numbers or densities of individuals, mu_exp (for "expressed"), where each column is a different phenotype (differences between the phenotypes before genotypic differences are added will be very minimal and only due to developmental noise); and an array where each z-level is a locus and the cells contain the proportion of each age-phenotype combo that has the '1' allele for that locus  
   timepoint1 <<- list(matrix(data=0, nrow=a_max, ncol=loci), 
                       matrix(data=0, nrow=a_max, ncol=loci),
                       matrix(data=0, nrow=a_max, ncol=loci),
                       array(data=0, dim=c(a_max, loci, loci)))
-  # YOY (young of year) individuals sizes and lengths - the model begins with a set number of YOY individuals
-  # YOY initial reversible E and structural S biomas is treated as fixed and unchanging and unrelated to genotype affecting adult growth
-  timepoint1[[1]][1,] <<- 3.938
-  timepoint1[[2]][1,] <<- 0.1102
+  # YOY (young of year) individuals sizes and lengths - the model begins with a set number of YOY individuals	
+  # YOY initial reversible E and structural S biomas is treated as fixed and unchanging and unrelated to genotype affecting adult growth  
+  # Arrhenius and Hansson ICES 1996, for herring-like
+  timepoint1[[1]][1,] <<- 0.3712037
+  timepoint1[[2]][1,] <<- 0.057
   # Setting initial number of individuals
   timepoint1[[3]][1,] <<- 100
-  # Initially, every cohort is euqally likely to have a 1 or 0 at any locus
-  timepoint1[[4]][1,,] <- 0.5
+  # Initially, every cohort is euqally likely to have a 1 or 0 at any locus  
+  timepoint1[[4]][1,,] <<- 0.5
   timepoints[[1]] <<- timepoint1
   # Initialize resources vector
   resources <<- vector(mode="numeric", length=runtime)
@@ -151,7 +161,7 @@ model_iteration <<- function(results_counter) {
   resource_consumption <<- vector(mode="numeric", length=runtime)
   # Initialize vector to hold yields
   yields <<- vector(mode="numeric", length=runtime)
-  # This list will hold summary statistics of random values generated for the resource carrying capacity at every time period/season of the model run
+  # This list will hold summary statistics of random values generated for the resource carrying capacity at every time period/season of the model run	
   random_vec_summaries <<- vector(mode="list", length=runtime)
   # Initialize vector of recruitments
   recruitments <<- vector(mode="numeric", length=runtime)
@@ -182,7 +192,6 @@ model_iteration <<- function(results_counter) {
     phenotype_averages[5,tracker_counter] <<- timepoints[[runtime]][[2]][13,tracker_counter]
     # This line determines the length of age-10 individuals within each phenotype group
     phenotype_averages[6,tracker_counter] <<- timepoints[[runtime]][[2]][41,tracker_counter]
-    
   }
   
   # Turning abundances of each newly-mature cohort within each phenotypic group into proportions of newly mature fish across phenotypic groups
@@ -207,7 +216,7 @@ model_iteration <<- function(results_counter) {
   # After each single run, save output to a file
   # Get rid of the return() statement?
   object<-(list(result_inflection, result_AAM, result_LAM, result_L2, result_L3, result_Linf, result_popn, result_biomass, resources, resource_consumption, yields, r_SD, Fishing_add, random_vec_summaries, recruitments, as.data.frame(phenotype_averages)))
-
+  
   data_list <- object # Use whatever the name is of the workspace object to which the results of the mclapply run were assigned
   no_runs <-1 # How many runs are contained in the object to which the mclapply results were assigned?
   mat = matrix(, nrow = no_runs, ncol = 16) # Set up a matrix to hold the results
@@ -217,23 +226,23 @@ model_iteration <<- function(results_counter) {
   output_all <- na.omit(output_all)
   colnames(output_all) <- c("phys", "AAM", "LAM", "L2", "L3", "Linf", "K_var", "F")
   
-  setwd("/home/mschumm/ecoevoharvestmodel/data_storage_2")
-
+  setwd("/home/mschumm/ecoevoharvestmodel/data_storage")
+  
   write.csv(output_all, paste("output_all_", results_counter, sep=""))
   
   setwd("/home/mschumm/ecoevoharvestmodel")
   
-  # return()
+  return()
 }
 
 # Function for an iteration of the model
 model_run <-function(list, x) {
   
-  p_0 <<-  0.1
-  c_S <<-  0.003
-  c_E <<-  0.0003
+  p_0 <<-  0.3
+  c_S <<-  0.03
+  c_E <<-  0.03
   m <<- log(0.999452)*(-1)
-  resource_K <<- 3e+11
+  resource_K <<- 3e+14
   resource_r <<- 1.5
   
   # Adding fishing after a certain time point
@@ -249,15 +258,15 @@ model_run <-function(list, x) {
   new_E_l <<- list(list[[1]], list[[2]])
   new_mu_exp <<- list[[3]]
   if (((x-1)%%12 == 1) & x!=runtime) {
-  # Generate vectors of random values, with some degree of temporal correlation phi
-  times <- 1:(round(timescale)*12)
-  mat <- as.matrix(dist(times, diag = T, upper= T))
-  # Set the autocorrelation below
-  # Creating the correlation-by-time-separation matrix
-  AR_mat <- as.matrix(phi^mat)
-  L <- t(chol(AR_mat))
-  # Multiplying the transpose of the Cholesky factorization by a vector of random values gives vectors of autocorrelated value
-  ar_var[[(((x-1-1)%/%12)+1)]] <<- L%*%matrix(rnorm(round(timescale)*(12^2)*round(timescale),0,1), ncol= round(timescale)*12)*r_SD*sqrt(1-phi^2)
+    # Generate vectors of random values, with some degree of temporal correlation phi
+    times <- 1:(round(timescale)*12)
+    mat <- as.matrix(dist(times, diag = T, upper= T))
+    # Set the autocorrelation below
+    # Creating the correlation-by-time-separation matrix
+    AR_mat <- as.matrix(phi^mat)
+    L <- t(chol(AR_mat))
+    # Multiplying the transpose of the Cholesky factorization by a vector of random values gives vectors of autocorrelated value
+    ar_var[[(((x-1-1)%/%12)+1)]] <<- L%*%matrix(rnorm(round(timescale)*(12^2)*round(timescale),0,1), ncol= round(timescale)*12)*r_SD*sqrt(1-phi^2)
   }
   random_values <- as.vector((ar_var[[(((x-1-1)%/%12)+1)]])[,1])[((((x-1-1)%%12)*round(timescale)+round(timescale)-round(timescale)+1)):(((x-1-1)%%12)*round(timescale)+round(timescale))]
   random_vec_summaries[[x-1]] <<- summary(exp(random_values - (sd(random_values)^2)/2))
@@ -275,8 +284,8 @@ model_run <-function(list, x) {
     c_S <<- Arr(temperature, A_met)*c_S
     c_E <<- Arr(temperature, A_met)*c_E
     # Toggle which of these temperature dependencies are commented or not (turned off or on in the code) to have temperature have separate direct effects on each of these parameter values
-    # resource_K <<- Arr(temperature, A_car)*resource_K
-    resource_r <<- Arr(temperature, A_gro)*resource_r
+    resource_K <<- Arr(temperature, A_car)*resource_K
+    # resource_r <<- Arr(temperature, A_gro)*resource_r
     # m <<- Arr(temperature, A_mor)*m
     # Allow the fish to feed (with their maximum food intake dependent on their sizes the previous day) and the resource to simultaneously grow
     # Differential equation function
@@ -310,11 +319,11 @@ model_run <-function(list, x) {
   # Record resource level
   resources[x] <<- resource
   # Record consumption level
-  # Resource consumption is only for last day within period of days in 'timescale' (i.e., the last day of the season if, timescale = 365/4)
+  # Resource consumption is only for last day within period of days in 'timescale' (i.e., the last day of the season if, timescale = 365/4)  
   resource_consumption[x] <<- new_E_l[[3]]
   # Record yield
   yields[x] <<- yield
-  # Add oldest and second-oldest cohorts to make the 'plus group'
+  # Add oldest and second-oldest cohorts to make the 'plus group'	  
   new_mu_exp[nrow(new_mu_exp)-1,] <- new_mu_exp[nrow(new_mu_exp),] + new_mu_exp[nrow(new_mu_exp)-1,]
   # Empty out first row for young of year, for the mu_exp, E and l matrices
   new_mu_exp <- advance_age(new_mu_exp)
@@ -332,34 +341,32 @@ model_run <-function(list, x) {
     new_E_l[[1]] <- fecundity_object[[3]]
     # Update first row of mu_exp with new individuals with expression based on past genotype
     new_recruits <- Ricker(fecundity_object[[1]])
-    if (new_recruits>0) {
     # Record the total number of new recruits
     recruitments[x] <<- new_recruits
-    
-    inheritance_object <- inheritance(fecundity_object[[2]], mu, new_mu_exp, Ricker(fecundity_object[[1]]))
-    # Updating mu_exp matrix
-    new_mu_exp <- inheritance_object[[4]]
-    # Give the YOY their sizes and lengths, if there are any
-    if (sum(new_mu_exp[1,]) > 0) {
-      new_E_l[[1]][1,] <- 3.938
-      new_E_l[[2]][1,] <- 0.1102
-    }
-    # Create vectors with length=number of new individuals, where each value is the individual's expressed phenotype (for "expressed") and their genotype (for "genotype")
-    # "genotype" has one of these for each locus (for each locus, giving the alleles that each of the individuals have for that locus)
-    mu <- inheritance_object[[1]]
-    expressed <- inheritance_object[[2]]
-    genotype <- inheritance_object[[3]]
-    # length(expressed) should == length(genotype)
-    # Filling in the genotypes of the new recruits
-    # The scroll_through_genotypes function will create a row for each z-level in the new mu 3D array, where the row has the proportions of new recruits from each phenotype (column) that have the '1' allele for the locus that this z-level of the array corresponds to
-    # See "reproduction_function" file for more info in comments
-    new_cohort_genotypes<-mapply(function(k) scroll_through_phenotypes(expressed, genotype[,k]), seq(1, loci))
-    mu[1,,] <- new_cohort_genotypes
+    if (new_recruits>0) {
+      inheritance_object <- inheritance(fecundity_object[[2]], mu, new_mu_exp, Ricker(fecundity_object[[1]]))
+      # Updating mu_exp matrix
+      new_mu_exp <- inheritance_object[[4]]
+      # Give the YOY their sizes and lengths, if there are any
+      if (sum(new_mu_exp[1,]) > 0) {
+        new_E_l[[1]][1,] <- 0.3712037
+        new_E_l[[2]][1,] <- 0.057
+      }
+      # Create vectors with length=number of new individuals, where each value is the individual's expressed phenotype (for "expressed") and their genotype (for "genotype")
+      # "genotype" has one of these for each locus (for each locus, giving the alleles that each of the individuals have for that locus)
+      mu <- inheritance_object[[1]]
+      expressed <- inheritance_object[[2]]
+      genotype <- inheritance_object[[3]]
+      # length(expressed) should == length(genotype)
+      # Filling in the genotypes of the new recruits
+      # The scroll_through_genotypes function will create a row for each z-level in the new mu 3D array, where the row has the proportions of new recruits from each phenotype (column) that have the '1' allele for the locus that this z-level of the array corresponds to    
+      # See "reproduction_function" file for more info in comments
+      new_cohort_genotypes<-mapply(function(k) scroll_through_phenotypes(expressed, genotype[,k]), seq(1, loci))    
+      mu[1,,] <- new_cohort_genotypes
     }
   }
   # Return updated matrices for this time point (2 through runtime)
   return((list(new_E_l[[1]], new_E_l[[2]], new_mu_exp, mu)))
-  
 }
 
 # Function for advancing age
@@ -368,5 +375,4 @@ advance_age <- function(matrix) {
   matrix[1,] <- 0
   return(matrix)
 }
-
 
