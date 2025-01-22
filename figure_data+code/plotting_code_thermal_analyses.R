@@ -64,7 +64,7 @@ fish_tile[,3] <- fish_tile[,3]*100
 colnames(fish_tile) <- c("K_CV", "Fishing", "phys")
 p_herring_negT<-ggplot(fish_tile, aes(K_CV, Fishing, fill = phys, z=phys)) + geom_tile()  + theme_minimal() + labs(x="Temperature variability, \nCV", y="Maximum fishing mort.", fill="Length\nat maturity (cm.)") + scale_fill_viridis(option="turbo") + geom_contour(color="black", lwd=0.2, breaks=seq(26.9, 27.5, by=0.1)) + geom_text_contour(stroke=0.2, breaks=seq(26.9, 27.5, by=0.1)) + scale_fill_viridis_c(limits=c(26.9,28.4), option = "turbo") + theme(legend.position = "none")
 
-plot_grid(p_cod_posT, p_cod_negT, cod_legend, p_herring_posT, p_herring_negT, herring_legend, nrow=2, rel_widths = c(1,1,0.3,1,1,0.3))
+plot_grid(p_cod_posT, p_cod_negT, cod_legend, p_herring_posT, p_herring_negT, herring_legend, nrow=2, rel_widths = c(1,1,0.1,1,1,0.1))
 
 ##### Supplemental Fig 5
 
