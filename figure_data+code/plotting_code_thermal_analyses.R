@@ -6,6 +6,7 @@ myMergedData <-
 library(ggplot2)
 library(cowplot)
 library(viridis)
+library(metR)
 
 ##### Main text - Figure 6
 
@@ -238,9 +239,9 @@ fish_tile[,3] <- fish_tile[,3]/20
 colnames(fish_tile) <- c("K_CV", "Fishing", "phys")
 p_herring_negT_evo<-ggplot(fish_tile, aes(K_CV, Fishing, fill = phys, z=phys)) + geom_tile()  + theme_minimal() + labs(x="Temperature variability, \nCV", y="Maximum fishing mort.", fill="r, relative reproduction alloc.\nat short length") + scale_fill_viridis(limits=c(0.5, 0.75), option="turbo") + geom_contour(color="black", lwd=0.2, breaks=seq(0.52,0.7,by=0.02)) + geom_text_contour(stroke=0.2, breaks=seq(0.52,0.7,by=0.02)) + scale_fill_viridis_c( limits=c(0.5, 0.75),option = "turbo") + theme(legend.position = "none")
 
-thermal_plot_L3<-plot_grid(p_cod_posT_L3, p_cod_negT_L3, cod_legend_L3, p_herring_posT_L3, p_herring_negT_L3, herring_legend_L3, nrow=1, rel_width=c(1,1,0.3, 1,1, 0.3))
+thermal_plot_L3<-plot_grid(p_cod_posT_L3, p_cod_negT_L3, cod_legend_L3, p_herring_posT_L3, p_herring_negT_L3, herring_legend_L3, nrow=1, rel_width=c(1,1,0.1, 1,1, 0.1))
 
-thermal_plot_age<-plot_grid(p_cod_posT_age, p_cod_negT_age, cod_legend_age, p_herring_posT_age, p_herring_negT_age, herring_legend_age, nrow=1, rel_width=c(1,1,0.3, 1,1, 0.3))
+thermal_plot_age<-plot_grid(p_cod_posT_age, p_cod_negT_age, cod_legend_age, p_herring_posT_age, p_herring_negT_age, herring_legend_age, nrow=1, rel_width=c(1,1,0.1, 1,1, 0.1))
 
-thermal_plot_evo<-plot_grid(p_cod_posT_evo, p_cod_negT_evo, cod_legend_evo, p_herring_posT_evo, p_herring_negT_evo, herring_legend_evo, nrow=1, rel_width=c(1,1,0.3, 1,1, 0.3))
+thermal_plot_evo<-plot_grid(p_cod_posT_evo, p_cod_negT_evo, cod_legend_evo, p_herring_posT_evo, p_herring_negT_evo, herring_legend_evo, nrow=1, rel_width=c(1,1,0.1, 1,1, 0.1))
 
