@@ -149,7 +149,7 @@ model_iteration <<- function(results_counter) {
   phenotype_averages <<- matrix(nrow=6, ncol=loci)
   
   for (tracker_counter in 1:loci) {
-    # This matrix determines which cohort-pheno combos are mature. The model is stopped right before the last reproduction would occur, so we can use preparedness to mature (this is given by equation 9 of the paper methods) as an index of maturity 
+    # This matrix determines which cohort-pheno combos are mature. The model is stopped right before the last reproduction would occur, so we can use preparedness to mature (this is given by equation 7 of the paper methods) as an index of maturity 
     mature<<-(w*as.vector(timepoints[[runtime]][[1]][,tracker_counter])-as.vector((r_0*(structural_mass(timepoints[[runtime]][[2]][,tracker_counter]))^(r_1))))
     # This line determines what the earliest age is at which members of a phenotype are mature
     phenotype_averages[1,tracker_counter] <<- which(mature==(mature[mature>0])[1])
